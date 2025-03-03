@@ -1316,6 +1316,10 @@ public class CrCldImportCustomRestApisServiceImpl {
             headers.setBasicAuth(customRestApiReqPo.getCldUserName(), customRestApiReqPo.getCldPassword());
 
             String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
+
+            if (!stagingTableName.matches("^[a-zA-Z0-9_]+$")) {
+                throw new SQLException("Invalid table name: " + stagingTableName);
+            }
             PreparedStatement stmtA = con.prepareStatement("SELECT DISTINCT * FROM " + stagingTableName + " WHERE CR_BATCH_NAME = ?");
             stmtA.setString(1, customRestApiReqPo.getBatchName());
             ResultSet resultSetA = stmtA.executeQuery();
