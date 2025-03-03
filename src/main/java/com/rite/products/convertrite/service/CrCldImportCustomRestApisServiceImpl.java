@@ -160,7 +160,7 @@ public class CrCldImportCustomRestApisServiceImpl {
             error.setErrorType("BRANCH_CREATION_ERROR");
             error.setErrorMessage(e.getMessage());
             error.setCrBatchName(customRestApiReqPo.getBatchName());
-            error.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+            error.setCreationDate(new java.sql.Date(new Date().getTime()));
             error.setCreatedBy("ConvertRite");
             createBankBranchErrorsLi.add(error);
         }
@@ -186,7 +186,7 @@ public class CrCldImportCustomRestApisServiceImpl {
             error.setErrorType("BANK_CREATION_ERROR");
             error.setErrorMessage(e.getMessage());
             error.setCrBatchName(customRestApiReqPo.getBatchName());
-            error.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+            error.setCreationDate(new java.sql.Date(new Date().getTime()));
             error.setCreatedBy("ConvertRite");
             createBankBranchErrorsLi.add(error);
             log.error("Bank Creation Error" + e.getMessage());
@@ -610,7 +610,7 @@ public class CrCldImportCustomRestApisServiceImpl {
         error.setErrorMessage(errorMessage);
         error.setStatus(status);
         error.setCrBatchName(customRestApiReqPo.getBatchName());
-        error.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+        error.setCreationDate(new java.sql.Date(new Date().getTime()));
         error.setCreatedBy("ConvertRite");
         return error;
     }
@@ -653,7 +653,7 @@ public class CrCldImportCustomRestApisServiceImpl {
         error.setCldTempId(customRestApiReqPo.getCldTemplateId());
         error.setErrorMessage(errorMessage);
         error.setCrBatchName(customRestApiReqPo.getBatchName());
-        error.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+        error.setCreationDate(new java.sql.Date(new Date().getTime()));
         error.setCreatedBy("ConvertRite");
         return error;
     }
@@ -713,7 +713,7 @@ public class CrCldImportCustomRestApisServiceImpl {
             crProjDffError.setProjectId(rs.getString("PROJECT_ID"));
             crProjDffError.setCrBatchName(customRestApiReqPo.getBatchName());
             crProjDffError.setErrorMessage(e.getMessage());
-            crProjDffError.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+            crProjDffError.setCreationDate(new java.sql.Date(new Date().getTime()));
             crProjDffError.setCreatedBy("ConvertRite");
             projectErrorLi.add(crProjDffError);
         }
@@ -775,7 +775,7 @@ public class CrCldImportCustomRestApisServiceImpl {
                 stpError.setPartyTaxProfileId(taxProfileId);
                 stpError.setStatusCode(supTaxRegRes.getStatusCode().toString());
                 stpError.setCreatedBy("ConvertRite");
-                stpError.setCreatedDate(new java.sql.Date(new java.util.Date().getTime()));
+                stpError.setCreatedDate(new java.sql.Date(new Date().getTime()));
                 stpError.setCrBatchName(batchName);
                 log.info("getBatchName->" + stpError.getCrBatchName());
             }
@@ -784,7 +784,7 @@ public class CrCldImportCustomRestApisServiceImpl {
             stpError.setPartyTaxProfileId(taxProfileId);
             stpError.setStatusCode(supTaxRegRes.getStatusCode().toString());
             stpError.setErrorMessage(e.getMessage());
-            stpError.setCreatedDate(new java.sql.Date(new java.util.Date().getTime()));
+            stpError.setCreatedDate(new java.sql.Date(new Date().getTime()));
             stpError.setCrBatchName(batchName);
         }
         return stpError;
@@ -951,8 +951,8 @@ public class CrCldImportCustomRestApisServiceImpl {
         HttpTransportPropertiesImpl.Authenticator auth = new HttpTransportPropertiesImpl.Authenticator();
         auth.setUsername(customRestApiReqPo.getCldUserName());
         auth.setPassword(customRestApiReqPo.getCldPassword());
-        client.getOptions().setProperty(org.apache.axis2.transport.http.HTTPConstants.AUTHENTICATE, auth);
-        client.getOptions().setProperty(org.apache.axis2.transport.http.HTTPConstants.CHUNKED, false);
+        client.getOptions().setProperty(HTTPConstants.AUTHENTICATE, auth);
+        client.getOptions().setProperty(HTTPConstants.CHUNKED, false);
 
         stub._getServiceClient().getOptions().setProperty(HTTPConstants.SO_TIMEOUT, 600000);
         stub._getServiceClient().getOptions().setProperty(HTTPConstants.CONNECTION_TIMEOUT, 600000);
@@ -1019,9 +1019,9 @@ public class CrCldImportCustomRestApisServiceImpl {
             validateCvrCcid.setErrorCode(accountValidationOutput.getErrorCode());
             validateCvrCcid.setStatus(accountValidationOutput.getStatus());
             validateCvrCcid.setRequestId(customRestApiReqPo.getRequestId());
-            validateCvrCcid.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+            validateCvrCcid.setCreationDate(new java.sql.Date(new Date().getTime()));
             validateCvrCcid.setCreatedBy("ConvertRite");
-            validateCvrCcid.setLastUpdatedDate(new java.sql.Date(new java.util.Date().getTime()));
+            validateCvrCcid.setLastUpdatedDate(new java.sql.Date(new Date().getTime()));
             validateCvrCcid.setLastUpdateBy("ConvertRite");
 
             crValidateCvrCcidLi.add(validateCvrCcid);
@@ -1170,7 +1170,7 @@ public class CrCldImportCustomRestApisServiceImpl {
         error.setStatus(status);
         error.setErrorMessage(errorMessage);
         error.setCrBatchName(customRestApiReqPo.getBatchName());
-        error.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+        error.setCreationDate(new java.sql.Date(new Date().getTime()));
         error.setCreatedBy("ConvertRite");
         error.setCldTempId(customRestApiReqPo.getCldTemplateId());
         error.setBankAccountId(bankAccountId);
@@ -1228,7 +1228,7 @@ public class CrCldImportCustomRestApisServiceImpl {
         error.setErrorType(apiType);
         error.setErrorMessage(errorMessage);
         error.setCrBatchName(customRestApiReqPo.getBatchName());
-        error.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+        error.setCreationDate(new java.sql.Date(new Date().getTime()));
         error.setCreatedBy("ConvertRite");
         error.setCldTempId(customRestApiReqPo.getCldTemplateId());
         error.setAccountHolderName(crCreateBankAccountReqPo.getAccountHolderName());

@@ -128,9 +128,9 @@ public class SourceLookupDaoImpl {
 				} else {
 					XxrSrcLookupSets xxrSrcLookupSets = new XxrSrcLookupSets();
 					xxrSrcLookupSets.setLookupSetName(lookupType);
-					xxrSrcLookupSets.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+					xxrSrcLookupSets.setCreationDate(new Date(new java.util.Date().getTime()));
 					xxrSrcLookupSets.setCreatedBy("ConvertRite");
-					xxrSrcLookupSets.setLastUpdatedDate(new java.sql.Date(new java.util.Date().getTime()));
+					xxrSrcLookupSets.setLastUpdatedDate(new Date(new java.util.Date().getTime()));
 					xxrSrcLookupSets.setLastUpdateBy("ConvertRite");
 					XxrSrcLookupSets xxrSrcLookupSetRes = xxrSrcLookupSetRepository.save(xxrSrcLookupSets);
 					lookupSetId = xxrSrcLookupSetRes.getLookupsetId();
@@ -147,9 +147,9 @@ public class SourceLookupDaoImpl {
 						XxrSrcLookupValues srcLookupValues = new XxrSrcLookupValues();
 						srcLookupValues.setLookupSetId(lookupSetId);
 						srcLookupValues.setLookupValue(lookupCode);
-						srcLookupValues.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+						srcLookupValues.setCreationDate(new Date(new java.util.Date().getTime()));
 						srcLookupValues.setCreatedBy("ConvertRite");
-						srcLookupValues.setLastUpdatedDate(new java.sql.Date(new java.util.Date().getTime()));
+						srcLookupValues.setLastUpdatedDate(new Date(new java.util.Date().getTime()));
 						srcLookupValues.setLastUpdateBy("ConvertRite");
 						XxrSrcLookupValues xxrSrcLookupValuRes = xxrSrcLookupValuesRepository.save(srcLookupValues);
 						log.info(xxrSrcLookupValuRes.getLookupValueId() + "#######lookUpId");
@@ -185,9 +185,9 @@ public class SourceLookupDaoImpl {
 			} else {
 				XxrSrcLookupSets xxrSrcLookupSets = new XxrSrcLookupSets();
 				xxrSrcLookupSets.setLookupSetName(lookupType);
-				xxrSrcLookupSets.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+				xxrSrcLookupSets.setCreationDate(new Date(new java.util.Date().getTime()));
 				xxrSrcLookupSets.setCreatedBy("ConvertRite");
-				xxrSrcLookupSets.setLastUpdatedDate(new java.sql.Date(new java.util.Date().getTime()));
+				xxrSrcLookupSets.setLastUpdatedDate(new Date(new java.util.Date().getTime()));
 				xxrSrcLookupSets.setLastUpdateBy("ConvertRite");
 				XxrSrcLookupSets xxrSrcLookupSetRes = xxrSrcLookupSetRepository.save(xxrSrcLookupSets);
 				lookupSetId = xxrSrcLookupSetRes.getLookupsetId();
@@ -204,9 +204,9 @@ public class SourceLookupDaoImpl {
 					XxrSrcLookupValues srcLookupValues = new XxrSrcLookupValues();
 					srcLookupValues.setLookupSetId(lookupSetId);
 					srcLookupValues.setLookupValue(lookupCode);
-					srcLookupValues.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+					srcLookupValues.setCreationDate(new Date(new java.util.Date().getTime()));
 					srcLookupValues.setCreatedBy("ConvertRite");
-					srcLookupValues.setLastUpdatedDate(new java.sql.Date(new java.util.Date().getTime()));
+					srcLookupValues.setLastUpdatedDate(new Date(new java.util.Date().getTime()));
 					srcLookupValues.setLastUpdateBy("ConvertRite");
 					XxrSrcLookupValues xxrSrcLookupValuRes = xxrSrcLookupValuesRepository.save(srcLookupValues);
 					log.info(xxrSrcLookupValuRes.getLookupValueId() + "#######lookUpId");

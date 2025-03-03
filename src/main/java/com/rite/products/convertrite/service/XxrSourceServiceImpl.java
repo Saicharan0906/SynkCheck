@@ -687,9 +687,9 @@ public class XxrSourceServiceImpl implements XxrSourceService {
                 crSourceLoadFailRecords.setSuccess(insertcount);
                 crSourceLoadFailRecords.setFailedClob(result);
                 crSourceLoadFailRecords.setCreatedBy("ConvertRite");
-                crSourceLoadFailRecords.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+                crSourceLoadFailRecords.setCreationDate(new java.sql.Date(new Date().getTime()));
                 crSourceLoadFailRecords.setLastUpdateBy("ConvertRite");
-                crSourceLoadFailRecords.setLastUpdatedDate(new java.sql.Date(new java.util.Date().getTime()));
+                crSourceLoadFailRecords.setLastUpdatedDate(new java.sql.Date(new Date().getTime()));
                 crSourceLoadFailRecords.setLogFileBlob(logFileText);
 
                 crSourceLoadFailRecordsRepo.save(crSourceLoadFailRecords);
@@ -864,7 +864,7 @@ public class XxrSourceServiceImpl implements XxrSourceService {
                 source.setAttribute4(saveSourceTemplateHeaderPo.getAttribute4());
                 source.setAttribute5(saveSourceTemplateHeaderPo.getAttribute5());
                 source.setLastUpdatedBy("ConvertRite");
-                source.setLastUpdatedDate(new java.sql.Date(new java.util.Date().getTime()));
+                source.setLastUpdatedDate(new java.sql.Date(new Date().getTime()));
                 sourceTemplateHeaderRes = sourceTemplateHeadersRepository.save(source);
                 sourceTemplateHeadersList.add(sourceTemplateHeaderRes);
             } else {
@@ -886,9 +886,9 @@ public class XxrSourceServiceImpl implements XxrSourceService {
                 sourceTemplateHeader.setAttribute4(saveSourceTemplateHeaderPo.getAttribute4());
                 sourceTemplateHeader.setAttribute5(saveSourceTemplateHeaderPo.getAttribute5());
                 sourceTemplateHeader.setLastUpdatedBy("ConvertRite");
-                sourceTemplateHeader.setLastUpdatedDate(new java.sql.Date(new java.util.Date().getTime()));
+                sourceTemplateHeader.setLastUpdatedDate(new java.sql.Date(new Date().getTime()));
                 sourceTemplateHeader.setCreatedBy("ConvertRite");
-                sourceTemplateHeader.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+                sourceTemplateHeader.setCreationDate(new java.sql.Date(new Date().getTime()));
                 sourceTemplateHeaderRes = sourceTemplateHeadersRepository.save(sourceTemplateHeader);
                 sourceTemplateHeadersList.add(sourceTemplateHeaderRes);
             }
@@ -936,8 +936,8 @@ public class XxrSourceServiceImpl implements XxrSourceService {
                  */
                 sourceTemplateColumns.setTemplateId(saveSourceTemplatesColumnsPo.getTemplateId());
                 sourceTemplateColumns.setLastUpdatedBy("ConvertRite");
-                sourceTemplateColumns.setLastUpdatedDate(new java.sql.Date(new java.util.Date().getTime()));
-                sourceTemplateColumns.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+                sourceTemplateColumns.setLastUpdatedDate(new java.sql.Date(new Date().getTime()));
+                sourceTemplateColumns.setCreationDate(new java.sql.Date(new Date().getTime()));
                 sourceTemplateColumns.setLastUpdatedBy("ConvertRite");
 
                 srcTemplateColumnsLi.add(sourceTemplateColumns);
@@ -969,8 +969,8 @@ public class XxrSourceServiceImpl implements XxrSourceService {
                 //sourceTemplateColumn.setStartDate(saveSourceTemplatesColumnsPo.getStartDate());
                 sourceTemplateColumn.setTemplateId(saveSourceTemplatesColumnsPo.getTemplateId());
                 sourceTemplateColumn.setLastUpdatedBy("ConvertRite");
-                sourceTemplateColumn.setLastUpdatedDate(new java.sql.Date(new java.util.Date().getTime()));
-                sourceTemplateColumn.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+                sourceTemplateColumn.setLastUpdatedDate(new java.sql.Date(new Date().getTime()));
+                sourceTemplateColumn.setCreationDate(new java.sql.Date(new Date().getTime()));
                 sourceTemplateColumn.setLastUpdatedBy("ConvertRite");
                 srcTemplateColumnsLi.add(sourceTemplateColumn);
             }

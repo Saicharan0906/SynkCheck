@@ -484,9 +484,9 @@ public class ErpIntegrationServiceImpl implements ErpIntegrationService {
             erpIntegration.setParameterList(loadImportDataReq.getParameterList());
             erpIntegration.setResult(result);
             erpIntegration.setXxrBatchName(loadImportDataReq.getBatchName());
-            erpIntegration.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+            erpIntegration.setCreationDate(new java.sql.Date(new Date().getTime()));
             erpIntegration.setCreatedBy("ConvertRite");
-            erpIntegration.setLastUpdatedDate(new java.sql.Date(new java.util.Date().getTime()));
+            erpIntegration.setLastUpdatedDate(new java.sql.Date(new Date().getTime()));
             erpIntegration.setLastUpdateBy("ConvertRite");
             xxrErpIntegrationRepository.save(erpIntegration);
         } catch (Exception e) {
@@ -991,9 +991,9 @@ public class ErpIntegrationServiceImpl implements ErpIntegrationService {
             crCloudJobStatus.setLoadRequestId(resultId);
             crCloudJobStatus.setJobStatus("Processing");
             crCloudJobStatus.setBatchName(loadandImportDataReqPo.getBatchName());
-            crCloudJobStatus.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+            crCloudJobStatus.setCreationDate(new java.sql.Date(new Date().getTime()));
             crCloudJobStatus.setCreatedBy("ConvertRite");
-            crCloudJobStatus.setLastUpdatedDate(new java.sql.Date(new java.util.Date().getTime()));
+            crCloudJobStatus.setLastUpdatedDate(new java.sql.Date(new Date().getTime()));
             crCloudJobStatus.setLastUpdatedBy("ConvertRite");
             crCloudJobStatusRepo.save(crCloudJobStatus);
             //Queuing sync
@@ -1036,7 +1036,7 @@ public class ErpIntegrationServiceImpl implements ErpIntegrationService {
                     crCloudJobStatus.setLoadRequestId(loadReqId);
                     crCloudJobStatus.setJobStatus("Processing");
                     crCloudJobStatus.setBatchName(loadandImportDataReqPo.getBatchName());
-                    java.sql.Date currentDate = new java.sql.Date(new java.util.Date().getTime());
+                    java.sql.Date currentDate = new java.sql.Date(new Date().getTime());
                     crCloudJobStatus.setCreationDate(currentDate);
                     crCloudJobStatus.setCreatedBy("ConvertRite");
                     crCloudJobStatus.setLastUpdatedDate(currentDate);

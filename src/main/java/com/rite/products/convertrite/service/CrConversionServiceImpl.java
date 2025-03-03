@@ -234,8 +234,6 @@ public class CrConversionServiceImpl implements CrConversionService {
 		writer.close();
 	}
 
-
-
 	@Override
 	public BasicResPo insertTransformStats(String userId, Long cloudTemplateId, String batchName) throws Exception {
 		BasicResPo resPo = new BasicResPo();
@@ -274,14 +272,5 @@ public class CrConversionServiceImpl implements CrConversionService {
 		return resPo;
 	}
 
-
-	@Override
-	public void jdbcDownloadFbdi(Long cloudTemplateId, String batchName, HttpServletResponse response) {
-       formingSqlQuery(cloudTemplateId,batchName);
-	}
-
-	private void formingSqlQuery(Long cloudTemplateId,String batchName) {
-
-	}
 }
 

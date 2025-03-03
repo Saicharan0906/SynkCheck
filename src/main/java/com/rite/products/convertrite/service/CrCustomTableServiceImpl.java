@@ -274,9 +274,9 @@ public class CrCustomTableServiceImpl implements CrCustomTableService {
                 crCustomLoadFailRecords.setSuccess(insertcount);
                 crCustomLoadFailRecords.setFailedClob(result);
                 crCustomLoadFailRecords.setCreatedBy("ConvertRite");
-                crCustomLoadFailRecords.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+                crCustomLoadFailRecords.setCreationDate(new java.sql.Date(new Date().getTime()));
                 crCustomLoadFailRecords.setLastUpdateBy("ConvertRite");
-                crCustomLoadFailRecords.setLastUpdatedDate(new java.sql.Date(new java.util.Date().getTime()));
+                crCustomLoadFailRecords.setLastUpdatedDate(new java.sql.Date(new Date().getTime()));
                 crCustomLoadFailRecords.setLogFileBlob(logFileText);
                 //Saving Custom Table Load Data Failed Records details
                 crCustomLoadFailRecordsRepo.save(crCustomLoadFailRecords);

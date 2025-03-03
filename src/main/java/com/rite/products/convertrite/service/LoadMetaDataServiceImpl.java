@@ -245,7 +245,7 @@ public class LoadMetaDataServiceImpl implements LoadMetaDataService {
 			crFile.setFileName(fileName);
 			crFile.setFileType(fileNameArr[1]);
 			crFile.setCreatedBy("ConvertRiteAdmin");
-			crFile.setCreateDate(new java.sql.Date(new java.util.Date().getTime()));
+			crFile.setCreateDate(new java.sql.Date(new Date().getTime()));
 			crFileDetailsRepo.save(crFile);
 		}
 

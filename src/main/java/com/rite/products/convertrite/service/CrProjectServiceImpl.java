@@ -236,9 +236,9 @@ public class CrProjectServiceImpl implements CrProjectService {
                 proj.setProjectId(projectId);
                 proj.setProjectName(p.getProjectName());
                 proj.setProjectCode(p.getProjectCode());
-                proj.setStartDate(new java.sql.Date(new java.util.Date().getTime()));
+                proj.setStartDate(new java.sql.Date(new Date().getTime()));
                 proj.setLastUpdatedBy("ConvertRite");
-                proj.setLastUpdateDate(new java.sql.Date(new java.util.Date().getTime()));
+                proj.setLastUpdateDate(new java.sql.Date(new Date().getTime()));
                 int count = 0;
                 objectPoLi = mapper.convertValue(p.getObjects(), new TypeReference<List<ObjectsPo>>() {
                 });
@@ -442,7 +442,7 @@ public class CrProjectServiceImpl implements CrProjectService {
                     activitie.setTaskNum("" + currentIndex);
                     activitie.setTaskType("Task Type");
                     activitie.setLastUpdatedBy("ConvertRiteAdmin");
-                    activitie.setLastUpdateDate(new java.sql.Date(new java.util.Date().getTime()));
+                    activitie.setLastUpdateDate(new java.sql.Date(new Date().getTime()));
                     activitieList.add(activitie);
                     count++;
                 }

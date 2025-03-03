@@ -10,6 +10,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 
+
 import lombok.Data;
 
 @Entity
@@ -17,7 +18,7 @@ import lombok.Data;
 @Data
 public class CrEbsConnectionDetails {
 	@Id
-	@Column(name = "CONNECT_ID")
+	@Column(name="CONNECT_ID")
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long connectionId;
 	@Column(name = "CONNECTION_NAME")
@@ -32,7 +33,7 @@ public class CrEbsConnectionDetails {
 	private String password;
 	@Column(name = "PORT")
 	private Integer port;
-	@Column(name = "DATABASE_LINK")
+	@Column(name="DATABASE_LINK")
 	private String dabaseLink;
 	@Column(name = "CREATION_DATE")
 	private Date creationDate;
@@ -42,6 +43,5 @@ public class CrEbsConnectionDetails {
 	private String createdBy;
 	@Column(name = "LAST_UPDATED_BY")
 	private String lastUpdateBy;
-	@Column(name = "CONNECTION_TYPE")
-	private String connectionType;
+
 }

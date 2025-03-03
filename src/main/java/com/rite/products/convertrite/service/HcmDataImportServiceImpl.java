@@ -162,11 +162,11 @@ public class HcmDataImportServiceImpl implements HcmDataImportService {
 
             crHcmDataLoader.setDocumentTitle(hcmLoadandImportDataReqPo.getDocumentTitle());
 
-            crHcmDataLoader.setCreationDate(new java.sql.Date(new java.util.Date().getTime()));
+            crHcmDataLoader.setCreationDate(new java.sql.Date(new Date().getTime()));
 
             crHcmDataLoader.setCreatedBy("ConvertRite");
 
-            crHcmDataLoader.setLastUpdatedDate(new java.sql.Date(new java.util.Date().getTime()));
+            crHcmDataLoader.setLastUpdatedDate(new java.sql.Date(new Date().getTime()));
 
             crHcmDataLoader.setLastUpdatedBy("ConvertRite");
 
