@@ -28,4 +28,6 @@ public interface CrConversionService {
 	ResponseEntity<Object> transformDataToCloud(String cloudTemplateName, String pReprocessFlag, String pBatchFlag, String pBatchName, HttpServletRequest request) throws Exception;
 
 	void generateHdlFromLob(String cloudTemplateId, String batchName,String isIntialLoad,  HttpServletResponse response) throws Exception;
+
+    void jdbcDownloadFbdi(Long cloudTemplateId, String batchName, HttpServletResponse response);
 }

@@ -80,40 +80,95 @@ public class CrEbsConnectionServiceImpl {
      * @throws ValidationException
      * @throws Exception
      */
+//    public BasicResponsePo saveEbsConnectionDtls(CrSaveEbsConnectionDetailsReqPo ebsConnectnDtlsReqPo,
+//                                                 HttpServletRequest request) throws ValidationException, Exception {
+//        Connection con = null;
+//        PreparedStatement stmnt = null;
+//        BasicResponsePo responsePo = new BasicResponsePo();
+//        try {
+//            // create database connection
+//            log.info("TENANT-->" + request.getHeader("X-TENANT-ID"));
+//            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(request.getHeader("X-TENANT-ID"));
+//            //save or update ebs connection details
+//            //add _PodID
+//            CrEbsConnectionDetails ebsConnectnDtlsResp = saveConnectionDtls(ebsConnectnDtlsReqPo, con);
+//
+//            if (dbLinkEnabled) {
+//                String dbLinkName = ebsConnectnDtlsResp.getServiceName() + ebsConnectnDtlsResp.getConnectionId() + env + "_" + request.getHeader("X-TENANT-ID");
+//                //create ebs dblink
+//                String dbLinkQuery = dbLinkQuery(dbLinkName, ebsConnectnDtlsResp);
+//                // create Prepared Statement
+//                stmnt = con.prepareStatement(dbLinkQuery);
+//                int count = stmnt.executeUpdate();
+//                // updating connection details with dblink
+//                ebsConnectnDtlsResp.setDabaseLink(dbLinkName);
+//            }
+//
+//            CrEbsConnectionDetails updateCntResp = crEbsConnectionDetailsRepository.save(ebsConnectnDtlsResp);
+//            responsePo.setPayload(updateCntResp);
+//            responsePo.setMessage("Ebs connection details saved successfully");
+//        } finally {
+//            if (stmnt != null)
+//                stmnt.close();
+//            if (con != null)
+//                con.close();
+//        }
+//        return responsePo;
+//    }
     public BasicResponsePo saveEbsConnectionDtls(CrSaveEbsConnectionDetailsReqPo ebsConnectnDtlsReqPo,
                                                  HttpServletRequest request) throws ValidationException, Exception {
         Connection con = null;
         PreparedStatement stmnt = null;
         BasicResponsePo responsePo = new BasicResponsePo();
+
         try {
-            // create database connection
             log.info("TENANT-->" + request.getHeader("X-TENANT-ID"));
             con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(request.getHeader("X-TENANT-ID"));
-            //save or update ebs connection details
-            //add _PodID
+
+            // Save or update EBS connection details
             CrEbsConnectionDetails ebsConnectnDtlsResp = saveConnectionDtls(ebsConnectnDtlsReqPo, con);
 
             if (dbLinkEnabled) {
-                String dbLinkName = ebsConnectnDtlsResp.getServiceName() + ebsConnectnDtlsResp.getConnectionId() + env + "_" + request.getHeader("X-TENANT-ID");
-                //create ebs dblink
+                // Securely construct DB link name
+                String dbLinkName = sanitizeDbLinkName(
+                        ebsConnectnDtlsResp.getServiceName() +
+                                ebsConnectnDtlsResp.getConnectionId() +
+                                env + "_" +
+                                request.getHeader("X-TENANT-ID")
+                );
+
+                // Validate dbLinkName
+                if (dbLinkName == null) {
+                    throw new ValidationException("Invalid database link name");
+                }
+
+                // Securely generate the DB Link Query
                 String dbLinkQuery = dbLinkQuery(dbLinkName, ebsConnectnDtlsResp);
-                // create Prepared Statement
+
+                // Execute safely
                 stmnt = con.prepareStatement(dbLinkQuery);
                 int count = stmnt.executeUpdate();
-                // updating connection details with dblink
+
                 ebsConnectnDtlsResp.setDabaseLink(dbLinkName);
             }
 
             CrEbsConnectionDetails updateCntResp = crEbsConnectionDetailsRepository.save(ebsConnectnDtlsResp);
             responsePo.setPayload(updateCntResp);
-            responsePo.setMessage("Ebs connection details saved successfully");
+            responsePo.setMessage("EBS connection details saved successfully");
         } finally {
-            if (stmnt != null)
-                stmnt.close();
-            if (con != null)
-                con.close();
+            if (stmnt != null) stmnt.close();
+            if (con != null) con.close();
         }
         return responsePo;
+    }
+
+
+    private String sanitizeDbLinkName(String dbLinkName) {
+        if (dbLinkName == null || !dbLinkName.matches("^[a-zA-Z0-9_]+$")) {
+            log.error("Invalid database link name: " + dbLinkName);
+            return null;
+        }
+        return dbLinkName;
     }
 
     private CrEbsConnectionDetails saveConnectionDtls(CrSaveEbsConnectionDetailsReqPo ebsConnectnDtlsReqPo, Connection con) throws ValidationException, Exception {
@@ -330,8 +385,8 @@ public class CrEbsConnectionServiceImpl {
                         columnType.equalsIgnoreCase("DECIMAL") ||
                         columnType.equalsIgnoreCase("FLOAT") ||
                         columnType.equalsIgnoreCase("BIGINT") ||
-                        columnType.equalsIgnoreCase("BIT")||
-                        columnType.equalsIgnoreCase("INT")   )
+                        columnType.equalsIgnoreCase("BIT") ||
+                        columnType.equalsIgnoreCase("INT"))
                     columnType = "N";
                 else if (columnType.equalsIgnoreCase("DATE"))
                     columnType = "D";
