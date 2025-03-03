@@ -91,47 +91,122 @@ public class CrCldImportCustomRestApisServiceImpl {
     @Autowired
     CrCloudJobStatusRepo crCloudJobStatusRepo;
 
+//    public void createBankAndBranches(CustomRestApiReqPo customRestApiReqPo) throws Exception {
+//        log.info("Start of createBankAndBranches Method in service ###");
+//
+//        Connection con = null;
+//        CrCloudTemplateHeadersView crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository
+//                .findById(customRestApiReqPo.getCldTemplateId()).get();
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        headers.setBasicAuth(customRestApiReqPo.getCldUserName(), customRestApiReqPo.getCldPassword());
+//        List<CrCreateBankBranchErrors> createBankBranchErrorsLi = new ArrayList<>();
+//        String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
+//
+//        try {
+//            // create database connection
+//            log.info("TENANT-->" + customRestApiReqPo.getPodId());
+//            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
+//            PreparedStatement stmnt = con.prepareStatement("select distinct bank_name,bank_number,attribute3 from "
+//                    + stagingTableName + " where CR_BATCH_NAME='" + customRestApiReqPo.getBatchName()
+//                    + "' and attribute1='N'");
+//            ResultSet rs = stmnt.executeQuery();
+//            while (rs.next()) {
+//                // CreateBank RestApi call
+//                createBank(rs, headers, createBankBranchErrorsLi, customRestApiReqPo);
+//            }
+//            PreparedStatement stmntBr = con.prepareStatement(
+//                    "select distinct bank_number,bank_name,BRANCH_NAME,BRANCH_NUMBER,attribute3,attribute4 from "
+//                            + stagingTableName + " where CR_BATCH_NAME='" + customRestApiReqPo.getBatchName()
+//                            + "' and attribute1 in('N','BA')");
+//            ResultSet rsBr = stmntBr.executeQuery();
+//            while (rsBr.next()) {
+//                // CreateBankBranch RestApi call
+//                createBankBranch(rsBr, createBankBranchErrorsLi, customRestApiReqPo, headers);
+//            }
+//            if (!createBankBranchErrorsLi.isEmpty())
+//                crCreateBankBranchErrorsRepository.saveAll(createBankBranchErrorsLi);
+//        } finally {
+//            if (con != null)
+//                con.close();
+//        }
+//    }
+
     public void createBankAndBranches(CustomRestApiReqPo customRestApiReqPo) throws Exception {
         log.info("Start of createBankAndBranches Method in service ###");
 
         Connection con = null;
         CrCloudTemplateHeadersView crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository
-                .findById(customRestApiReqPo.getCldTemplateId()).get();
+                .findById(customRestApiReqPo.getCldTemplateId())
+                .orElseThrow(() -> new RuntimeException("Template not found for ID: " + customRestApiReqPo.getCldTemplateId()));
+
         HttpHeaders headers = new HttpHeaders();
         headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(customRestApiReqPo.getCldUserName(), customRestApiReqPo.getCldPassword());
+
         List<CrCreateBankBranchErrors> createBankBranchErrorsLi = new ArrayList<>();
         String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
 
+        // Validate table name to avoid SQL injection risk
+        if (!isValidTableName(stagingTableName)) {
+            throw new IllegalArgumentException("Invalid staging table name: " + stagingTableName);
+        }
+
         try {
-            // create database connection
             log.info("TENANT-->" + customRestApiReqPo.getPodId());
             con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
-            PreparedStatement stmnt = con.prepareStatement("select distinct bank_name,bank_number,attribute3 from "
-                    + stagingTableName + " where CR_BATCH_NAME='" + customRestApiReqPo.getBatchName()
-                    + "' and attribute1='N'");
-            ResultSet rs = stmnt.executeQuery();
-            while (rs.next()) {
-                // CreateBank RestApi call
-                createBank(rs, headers, createBankBranchErrorsLi, customRestApiReqPo);
+
+            // Query to fetch distinct banks
+            String bankQuery = "SELECT DISTINCT bank_name, bank_number, attribute3 FROM " + stagingTableName +
+                    " WHERE CR_BATCH_NAME = ? AND attribute1 = 'N'";
+
+            try (PreparedStatement stmnt = con.prepareStatement(bankQuery)) {
+                stmnt.setString(1, customRestApiReqPo.getBatchName());
+                try (ResultSet rs = stmnt.executeQuery()) {
+                    while (rs.next()) {
+                        createBank(rs, headers, createBankBranchErrorsLi, customRestApiReqPo);
+                    }
+                }
             }
-            PreparedStatement stmntBr = con.prepareStatement(
-                    "select distinct bank_number,bank_name,BRANCH_NAME,BRANCH_NUMBER,attribute3,attribute4 from "
-                            + stagingTableName + " where CR_BATCH_NAME='" + customRestApiReqPo.getBatchName()
-                            + "' and attribute1 in('N','BA')");
-            ResultSet rsBr = stmntBr.executeQuery();
-            while (rsBr.next()) {
-                // CreateBankBranch RestApi call
-                createBankBranch(rsBr, createBankBranchErrorsLi, customRestApiReqPo, headers);
+
+            // Query to fetch distinct bank branches
+            String branchQuery = "SELECT DISTINCT bank_number, bank_name, BRANCH_NAME, BRANCH_NUMBER, attribute3, attribute4 " +
+                    "FROM " + stagingTableName +
+                    " WHERE CR_BATCH_NAME = ? AND attribute1 IN ('N', 'BA')";
+
+            try (PreparedStatement stmntBr = con.prepareStatement(branchQuery)) {
+                stmntBr.setString(1, customRestApiReqPo.getBatchName());
+                try (ResultSet rsBr = stmntBr.executeQuery()) {
+                    while (rsBr.next()) {
+                        createBankBranch(rsBr, createBankBranchErrorsLi, customRestApiReqPo, headers);
+                    }
+                }
             }
-            if (!createBankBranchErrorsLi.isEmpty())
+
+            // Save errors if any
+            if (!createBankBranchErrorsLi.isEmpty()) {
                 crCreateBankBranchErrorsRepository.saveAll(createBankBranchErrorsLi);
+            }
         } finally {
-            if (con != null)
-                con.close();
+            if (con != null) {
+                try {
+                    con.close();
+                } catch (SQLException e) {
+                    log.error("Error closing database connection", e);
+                }
+            }
         }
     }
+
+    /**
+     * Validates the table name to prevent SQL injection.
+     */
+    private boolean isValidTableName(String tableName) {
+        return tableName.matches("^[a-zA-Z0-9_]+$"); // Allows only alphanumeric and underscores
+    }
+
 
     private void createBankBranch(ResultSet rsBr, List<CrCreateBankBranchErrors> createBankBranchErrorsLi,
                                   CustomRestApiReqPo customRestApiReqPo,
