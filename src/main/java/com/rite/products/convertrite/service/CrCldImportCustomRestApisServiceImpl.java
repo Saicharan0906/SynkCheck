@@ -913,31 +913,77 @@ public class CrCldImportCustomRestApisServiceImpl {
         return error;
     }
 
-    public void updateProjectDff(CustomRestApiReqPo customRestApiReqPo)
-            throws Exception {
+    //    public void updateProjectDff(CustomRestApiReqPo customRestApiReqPo)
+//            throws Exception {
+//        log.info("Start of updateProjectDff method in service ##");
+//        Connection con = null;
+//        CrCloudTemplateHeadersView crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository
+//                .findById(customRestApiReqPo.getCldTemplateId()).get();
+//        String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
+//        try {
+//            CrCloudJobStatus crCloudJobStatus = insertIntoCrCloudJobStatus(customRestApiReqPo, Status.COMPLETED.getStatus());
+//            log.info("TENANT-->" + customRestApiReqPo.getPodId());
+//            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
+//            PreparedStatement stmnt = con.prepareStatement("select * from " + stagingTableName
+//                    + " where CR_BATCH_NAME='" + customRestApiReqPo.getBatchName() + "'");
+//            ResultSet rs = stmnt.executeQuery();
+//            List<CrProjDffError> projectErrorLi = new ArrayList<>();
+//            // Update ProjectDFF Rest Api call
+//            while (rs.next())
+//                projectErrorLi = updateProjectDffRestApi(customRestApiReqPo, rs, projectErrorLi);
+//            if (!projectErrorLi.isEmpty())
+//                crProjDffErrorRepository.saveAll(projectErrorLi);
+//        } finally {
+//            if (con != null)
+//                con.close();
+//        }
+//    }
+    public void updateProjectDff(CustomRestApiReqPo customRestApiReqPo) throws Exception {
         log.info("Start of updateProjectDff method in service ##");
         Connection con = null;
+
         CrCloudTemplateHeadersView crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository
-                .findById(customRestApiReqPo.getCldTemplateId()).get();
+                .findById(customRestApiReqPo.getCldTemplateId())
+                .orElseThrow(() -> new RuntimeException("Template not found"));
+
         String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
+
+        //  Validate Table Name (Only Alphanumeric + Underscore)
+        if (!stagingTableName.matches("^[a-zA-Z0-9_]+$")) {
+            throw new SQLException("Invalid table name: " + stagingTableName);
+        }
+
         try {
             CrCloudJobStatus crCloudJobStatus = insertIntoCrCloudJobStatus(customRestApiReqPo, Status.COMPLETED.getStatus());
             log.info("TENANT-->" + customRestApiReqPo.getPodId());
-            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
-            PreparedStatement stmnt = con.prepareStatement("select * from " + stagingTableName
-                    + " where CR_BATCH_NAME='" + customRestApiReqPo.getBatchName() + "'");
+
+            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(
+                    String.valueOf(customRestApiReqPo.getPodId())
+            );
+
+            // Secure Prepared Statement
+            String query = "SELECT * FROM " + stagingTableName + " WHERE CR_BATCH_NAME = ?";
+            PreparedStatement stmnt = con.prepareStatement(query);
+            stmnt.setString(1, customRestApiReqPo.getBatchName());
+
             ResultSet rs = stmnt.executeQuery();
             List<CrProjDffError> projectErrorLi = new ArrayList<>();
-            // Update ProjectDFF Rest Api call
-            while (rs.next())
+
+            // Update ProjectDFF Rest API call
+            while (rs.next()) {
                 projectErrorLi = updateProjectDffRestApi(customRestApiReqPo, rs, projectErrorLi);
-            if (!projectErrorLi.isEmpty())
+            }
+
+            if (!projectErrorLi.isEmpty()) {
                 crProjDffErrorRepository.saveAll(projectErrorLi);
+            }
         } finally {
-            if (con != null)
+            if (con != null) {
                 con.close();
+            }
         }
     }
+
 
     private List<CrProjDffError> updateProjectDffRestApi(CustomRestApiReqPo customRestApiReqPo, ResultSet rs, List<CrProjDffError> projectErrorLi) throws Exception {
         try {
