@@ -10,6 +10,7 @@ import com.rite.products.convertrite.respository.AsyncProcessStatusRepository;
 import com.rite.products.convertrite.respository.CrValidateCvrCcidRepository;
 import com.rite.products.convertrite.respository.ProcessJobDaoImpl;
 import com.rite.products.convertrite.stubs.accountcombinationservice.AccountCombinationServiceStub;
+import java.sql.SQLException;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.axis2.client.ServiceClient;
@@ -154,10 +155,19 @@ public class ValidateAndCreateClass {
 //        return clazz.getMethod("getSegment" + index);
 //    }
 
+//
+
+
     public AsyncProcessStatus validateAndCreateAccounts(String stagingTableName, long offset, long limit, CustomRestApiReqPo customRestApiReqPo,
                                                         CrCloudTemplateHeadersView crCloudTemplateHeadersView, AsyncProcessStatus asyncProcessStatus) throws Exception {
         log.info("Start of validateAndCreateAccounts in service ###");
         updateAsyncProcessStatus(asyncProcessStatus.getAsyncProcessId(), "Processing");
+
+        // ✅ Validate Table Name (Prevent SQL Injection)
+        if (!stagingTableName.matches("^[a-zA-Z0-9_]+$")) {
+            throw new SQLException("Invalid table name: " + stagingTableName);
+        }
+
         String query = "SELECT * FROM ("
                 + "SELECT DISTINCT " + customRestApiReqPo.getCcidColumnName() + ", "
                 + customRestApiReqPo.getLedgerColumnName() + ", ROWNUM rnum FROM ("
@@ -167,7 +177,6 @@ public class ValidateAndCreateClass {
                 + ") WHERE ROWNUM <= ?"
                 + ") WHERE rnum >= ?";
 
-//        log.info("sql>>>>>" + sql);
         try (Connection con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
              PreparedStatement preStmnt = con.prepareStatement(query)) {
 
@@ -195,7 +204,6 @@ public class ValidateAndCreateClass {
 
                     segmentValuesArr = splitCcid(targetCcid, delimiter);
                     AccountCombinationServiceStub.AccountValidationInput accountValidationInput = createAccountValidationInput(segmentValuesArr, rs.getString(customRestApiReqPo.getLedgerColumnName()));
-//                    log.info(accountValidationInput.toString());
                     validateCreateAccounts.addValidationInputRowList(accountValidationInput);
                 }
 
@@ -209,12 +217,12 @@ public class ValidateAndCreateClass {
                 log.info("start saving into CR_VALIDATE_CVR_CCID");
                 validateCvrCcidRepository.saveAll(crValidateCvrCcidList);
                 log.info("end saving into CR_VALIDATE_CVR_CCID");
-
             }
         }
 
         return asyncProcessStatus;
     }
+
 
 
     private AccountCombinationServiceStub createStub(String cloudUrl, String username, String password) throws Exception {

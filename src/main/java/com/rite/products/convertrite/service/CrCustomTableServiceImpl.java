@@ -10,6 +10,7 @@ import com.rite.products.convertrite.multitenancy.config.tenant.hibernate.Dynami
 import com.rite.products.convertrite.po.*;
 import com.rite.products.convertrite.respository.*;
 import com.rite.products.convertrite.utils.Utils;
+import java.sql.SQLException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
@@ -86,7 +87,7 @@ public class CrCustomTableServiceImpl implements CrCustomTableService {
         List<String[]> metaDataList = Utils.convertLobToList(crFileDetails.getFileContent());
         CrCustomTables cutmTables = crCustomTablesRepository.findByTableName(metaDataList.get(0)[0]);
         if (cutmTables != null)
-            throw new ValidationException("Metadata Table Name "+ cutmTables.getTableName()+" Already Exists ");
+            throw new ValidationException("Metadata Table Name " + cutmTables.getTableName() + " Already Exists ");
         String metaData = metaDataListToString(metaDataList);
         String customTableDDl = String.format("Create table %s (CR_BATCH_NAME VARCHAR2(2400), " +
                 "%s)", customTableName, metaData);
@@ -97,7 +98,7 @@ public class CrCustomTableServiceImpl implements CrCustomTableService {
             crDDLExecutorDaoImpl.executeDDL(customTableDDl);
             log.info("end of creation of custom table {}", customTableName);
         } catch (Exception e) {
-            log.error("CustomTable Creation Failed--> {} ",  e.getMessage(), e);
+            log.error("CustomTable Creation Failed--> {} ", e.getMessage(), e);
             basicResponsePo.setMessage("CustomTable creation failed");
             basicResponsePo.setError(e.getMessage());
             return basicResponsePo;
@@ -144,7 +145,7 @@ public class CrCustomTableServiceImpl implements CrCustomTableService {
         BasicResponsePo basicResponsePo = new BasicResponsePo();
         try {
             CrMdfyCustomTblResPo result = crCustomTableDaoImpl.mdfyCustomTableColumns(mdfyCustmTblReq, request.getHeader("userId"));
-            if("N".equals(result.getResCode())){
+            if ("N".equals(result.getResCode())) {
                 basicResponsePo.setError(result.getMessage());
                 basicResponsePo.setMessage(null);
             } else {
@@ -161,6 +162,164 @@ public class CrCustomTableServiceImpl implements CrCustomTableService {
     }
 
     @Override
+//    public BasicResponsePo loadDataToCustomTable(LoadCustomDataReqPo loadCustomDataReqPo, HttpServletRequest request) throws Exception {
+//        Connection con = null;
+//        BasicResponsePo basicResPo = new BasicResponsePo();
+//        Session jschSession = null;
+//        ChannelSftp channelSftp = null;
+//        InputStream inputStream = null;
+//        String strMessage = "";
+//        int insertcount = 0;
+//        long failedCount = 0;
+//        String result = null;
+//        String logFileText = null;
+//        CrLoadDataCustomTableResPo loadDataCustomTableResPo = new CrLoadDataCustomTableResPo();
+//        try {
+//            //Get CustomSource table details
+//            CrCustomSourceTableDtls custmTblDtls = crCustomSourceTableDtlsRepo.findById(loadCustomDataReqPo.getCustomTableId()).get();
+//            //Create connection for given tenant
+//            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(request.getHeader("X-TENANT-ID").toString());
+//
+//            //Checking in Custom table already any records exists with provided BatchName
+//            int count = getRecordCountByBatchName(con, custmTblDtls.getCustomTableName(), loadCustomDataReqPo.getCrBatchName());
+//            if (count > 0)
+//                throw new ValidationException("Given Batch Name  already exists, please load the data with new Batch Name.");
+//
+//            String fileName = loadCustomDataReqPo.getFileName();
+//            try {
+//                log.error("fileTransfer---> {} ",  fileTransfer);
+//                if ("SFTP".equalsIgnoreCase(fileTransfer)) {
+//                    jschSession = utils.setupJschSession();
+//                    channelSftp = (ChannelSftp) jschSession.openChannel("sftp");
+//                    channelSftp.connect();
+//                    channelSftp.cd(fileUploadDir);
+//                }
+//                if ("SFTP".equalsIgnoreCase(fileTransfer)) {
+//                    inputStream = channelSftp.get(fileName);
+//                } else if ("NFS".equalsIgnoreCase(fileTransfer)) {
+//                    log.info("fileUploadDir + fileName------> {} ",  fileUploadDir + fileName);
+//                    inputStream = new FileInputStream(fileUploadDir + fileName);
+//                }
+//
+//            } catch (Exception e) {
+//                log.error("Error in loadDataToCustomTable --->" + e);
+//            }
+//            //Custom Table Metadata & ColumnNames
+//            MetaDataColumnsPo metaDataColumnsPo = getMetaDataAndColumnNames(custmTblDtls.getMetadataTableId());
+//            if (inputStream != null) {
+//                boolean equalHeaderColumnsFlag = custmTblHdrColumnsEqualToDataFileHdrColumns(metaDataColumnsPo, inputStream);
+//                if (!equalHeaderColumnsFlag)
+//                    throw new ValidationException("Column Sequence of Csv file is not same as Custom table");
+//
+//            }
+//            // Generate a timestamp without special characters
+//            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+//            String timestamp = dateFormat.format(new Date()).replaceAll("[^a-zA-Z0-9]", "");
+//            String extrnlTableName = custmTblDtls.getCustomTableName() + timestamp + "_EXT";
+//            //Create External Table
+//            String externalSql = "CREATE TABLE " + extrnlTableName + " (" + metaDataColumnsPo.getMetaDataStr() + " )"
+//                    + "ORGANIZATION EXTERNAL\r\n" + "(TYPE ORACLE_LOADER\r\n" + "DEFAULT DIRECTORY G2N_TAB_MAIN\r\n"
+//                    + "ACCESS PARAMETERS\r\n" + "(\r\n" + "records delimited by newline\r\n"
+//                    + "LOGFILE G2N_TAB_MAIN:'" + extrnlTableName + ".log'\r\n" + "BADFILE G2N_TAB_MAIN:'"
+//                    + extrnlTableName + ".bad'\r\n" + "skip 1\r\n"
+//                    + "fields terminated by ',' optionally enclosed BY '\"' LDRTRIM\r\n"
+//                    + "missing field values are null\r\n" + ")\r\n" + "LOCATION ('" + loadCustomDataReqPo.getFileName()
+//                    + "')\r\n" + ")  REJECT LIMIT UNLIMITED";
+//            log.info(" {} ", externalSql);
+//            PreparedStatement extrnlStmnt = con.prepareStatement(externalSql);
+//            int extrnlCount = extrnlStmnt.executeUpdate();
+//            log.info("{} -->count", extrnlCount);
+//            extrnlStmnt.close();
+//            try {
+//                //Insert Data into Custom Table
+//                String executeQuery = "insert into " + custmTblDtls.getCustomTableName() + "  SELECT '"
+//                        + loadCustomDataReqPo.getCrBatchName() + "',b.* FROM (SELECT " + metaDataColumnsPo.getColumnNames()
+//                        + " FROM " + extrnlTableName + ") b";
+//                log.info("{} --->Insert executeQuery", executeQuery);
+//                PreparedStatement extStmnt = con.prepareStatement(executeQuery);
+//                insertcount = extStmnt.executeUpdate();
+//                extStmnt.close();
+//                log.info("{} insertcount-->", insertcount);
+//                try {
+//                    if ("SFTP".equalsIgnoreCase(fileTransfer)) {
+//                        inputStream = channelSftp.get(extrnlTableName + ".bad");
+//                        if (inputStream != null) {
+//                            failedCount = new BufferedReader(new InputStreamReader(channelSftp.get(extrnlTableName + ".bad")))
+//                                    .lines().count();
+//                            result = new BufferedReader(new InputStreamReader(channelSftp.get(extrnlTableName + ".bad")))
+//                                    .lines().collect(Collectors.joining("\n"));
+//                            logFileText = new BufferedReader(new InputStreamReader(channelSftp.get(extrnlTableName + ".log")))
+//                                    .lines().collect(Collectors.joining("\n"));
+//                            channelSftp.rm(extrnlTableName + ".bad");
+//                        }
+//                    } else if ("NFS".equalsIgnoreCase(fileTransfer)) {
+//                        inputStream = new FileInputStream(fileUploadDir + extrnlTableName + ".bad");
+//                        if (inputStream != null) {
+//                            failedCount = new BufferedReader(new InputStreamReader(new FileInputStream(fileUploadDir + extrnlTableName + ".bad")))
+//                                    .lines().count();
+//                            result = new BufferedReader(new InputStreamReader(new FileInputStream(fileUploadDir + extrnlTableName + ".bad")))
+//                                    .lines().collect(Collectors.joining("\n"));
+//                            logFileText = new BufferedReader(new InputStreamReader(new FileInputStream(fileUploadDir + extrnlTableName + ".log")))
+//                                    .lines().collect(Collectors.joining("\n"));
+//                        }
+//                    }
+//                } catch (Exception e) {
+//                    log.error("File Not Found --->" + extrnlTableName + ".bad");
+//                    log.error("File Not Found --->" + e);
+//                }
+//                CrCustomLoadDataFailedRecords crCustomLoadFailRecords = new CrCustomLoadDataFailedRecords();
+//                crCustomLoadFailRecords.setCustomTableId(loadCustomDataReqPo.getCustomTableId());
+//                crCustomLoadFailRecords.setFileName(fileName);
+//                crCustomLoadFailRecords.setFailed(failedCount);
+//                crCustomLoadFailRecords.setCrBatchName(loadCustomDataReqPo.getCrBatchName());
+//                crCustomLoadFailRecords.setSuccess(insertcount);
+//                crCustomLoadFailRecords.setFailedClob(result);
+//                crCustomLoadFailRecords.setCreatedBy("ConvertRite");
+//                crCustomLoadFailRecords.setCreationDate(new java.sql.Date(new Date().getTime()));
+//                crCustomLoadFailRecords.setLastUpdateBy("ConvertRite");
+//                crCustomLoadFailRecords.setLastUpdatedDate(new java.sql.Date(new Date().getTime()));
+//                crCustomLoadFailRecords.setLogFileBlob(logFileText);
+//                //Saving Custom Table Load Data Failed Records details
+//                crCustomLoadFailRecordsRepo.save(crCustomLoadFailRecords);
+//            } catch (Exception e) {
+//                if (!Validations.isNullOrEmpty(extrnlTableName)) {
+//                    PreparedStatement dropStmnt = con.prepareStatement("DROP TABLE " + extrnlTableName);
+//                    int tableDeleted = dropStmnt.executeUpdate();
+//                    log.info(" {} --> tableDeleted", tableDeleted);
+//                    dropStmnt.close();
+//                }
+//                throw new Exception(e.getMessage());
+//            }
+//            PreparedStatement dropStmnt = con.prepareStatement("DROP TABLE " + extrnlTableName);
+//            int tableDeleted = dropStmnt.executeUpdate();
+//            log.info("{} --> external table Deleted", tableDeleted);
+//            dropStmnt.close();
+//
+//            if (failedCount == 0) {
+//                strMessage = "Successfully Loaded Data into Custom Table";
+//            } else {
+//                strMessage = failedCount + " records failed loading into Custom Table";
+//            }
+//
+//            loadDataCustomTableResPo.setLoadedRecords(insertcount);
+//            loadDataCustomTableResPo.setFailedRecords(failedCount);
+//            loadDataCustomTableResPo.setCrBatchName(loadCustomDataReqPo.getCrBatchName());
+//            loadDataCustomTableResPo.setCustomTableName(custmTblDtls.getCustomTableName());
+//        }finally {
+//            if (channelSftp != null) {
+//                channelSftp.exit();
+//                channelSftp.disconnect();
+//            }
+//            if (jschSession != null)
+//                jschSession.disconnect();
+//            if (con != null)
+//                con.close();
+//        }
+//        basicResPo.setMessage(strMessage);
+//        basicResPo.setPayload(loadDataCustomTableResPo);
+//        return basicResPo;
+//    }
+
     public BasicResponsePo loadDataToCustomTable(LoadCustomDataReqPo loadCustomDataReqPo, HttpServletRequest request) throws Exception {
         Connection con = null;
         BasicResponsePo basicResPo = new BasicResponsePo();
@@ -168,156 +327,154 @@ public class CrCustomTableServiceImpl implements CrCustomTableService {
         ChannelSftp channelSftp = null;
         InputStream inputStream = null;
         String strMessage = "";
-        int insertcount = 0;
+        int insertCount = 0;
         long failedCount = 0;
         String result = null;
         String logFileText = null;
         CrLoadDataCustomTableResPo loadDataCustomTableResPo = new CrLoadDataCustomTableResPo();
-        try {
-            //Get CustomSource table details
-            CrCustomSourceTableDtls custmTblDtls = crCustomSourceTableDtlsRepo.findById(loadCustomDataReqPo.getCustomTableId()).get();
-            //Create connection for given tenant
-            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(request.getHeader("X-TENANT-ID").toString());
 
-            //Checking in Custom table already any records exists with provided BatchName
+        try {
+            // Get CustomSource table details
+            CrCustomSourceTableDtls custmTblDtls = crCustomSourceTableDtlsRepo.findById(loadCustomDataReqPo.getCustomTableId()).orElseThrow(
+                    () -> new ValidationException("Invalid Custom Table ID")
+            );
+
+            //Validate Table Name (Prevent SQL Injection)
+            if (!custmTblDtls.getCustomTableName().matches("^[a-zA-Z0-9_]+$")) {
+                throw new SQLException("Invalid table name: " + custmTblDtls.getCustomTableName());
+            }
+
+            // Create connection for given tenant
+            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(request.getHeader("X-TENANT-ID"));
+
+            // Checking if the BatchName already exists
             int count = getRecordCountByBatchName(con, custmTblDtls.getCustomTableName(), loadCustomDataReqPo.getCrBatchName());
-            if (count > 0)
-                throw new ValidationException("Given Batch Name  already exists, please load the data with new Batch Name.");
+            if (count > 0) {
+                throw new ValidationException("Given Batch Name already exists, please load the data with a new Batch Name.");
+            }
 
             String fileName = loadCustomDataReqPo.getFileName();
             try {
-                log.error("fileTransfer---> {} ",  fileTransfer);
+                log.info("File transfer method: {}", fileTransfer);
                 if ("SFTP".equalsIgnoreCase(fileTransfer)) {
                     jschSession = utils.setupJschSession();
                     channelSftp = (ChannelSftp) jschSession.openChannel("sftp");
                     channelSftp.connect();
                     channelSftp.cd(fileUploadDir);
-                }
-                if ("SFTP".equalsIgnoreCase(fileTransfer)) {
                     inputStream = channelSftp.get(fileName);
                 } else if ("NFS".equalsIgnoreCase(fileTransfer)) {
-                    log.info("fileUploadDir + fileName------> {} ",  fileUploadDir + fileName);
+                    log.info("Loading file from NFS: {}", fileUploadDir + fileName);
                     inputStream = new FileInputStream(fileUploadDir + fileName);
                 }
-
             } catch (Exception e) {
-                log.error("Error in loadDataToCustomTable --->" + e);
+                log.error("Error in file transfer", e);
+                throw new Exception("Error in file transfer: " + e.getMessage());
             }
-            //Custom Table Metadata & ColumnNames
+
+            // Validate Column Headers in CSV
             MetaDataColumnsPo metaDataColumnsPo = getMetaDataAndColumnNames(custmTblDtls.getMetadataTableId());
-            if (inputStream != null) {
-                boolean equalHeaderColumnsFlag = custmTblHdrColumnsEqualToDataFileHdrColumns(metaDataColumnsPo, inputStream);
-                if (!equalHeaderColumnsFlag)
-                    throw new ValidationException("Column Sequence of Csv file is not same as Custom table");
-
+            if (inputStream != null && !custmTblHdrColumnsEqualToDataFileHdrColumns(metaDataColumnsPo, inputStream)) {
+                throw new ValidationException("Column sequence of CSV file is not the same as the Custom table.");
             }
+
             // Generate a timestamp without special characters
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
-            String timestamp = dateFormat.format(new Date()).replaceAll("[^a-zA-Z0-9]", "");
-            String extrnlTableName = custmTblDtls.getCustomTableName() + timestamp + "_EXT";
-            //Create External Table
-            String externalSql = "CREATE TABLE " + extrnlTableName + " (" + metaDataColumnsPo.getMetaDataStr() + " )"
-                    + "ORGANIZATION EXTERNAL\r\n" + "(TYPE ORACLE_LOADER\r\n" + "DEFAULT DIRECTORY G2N_TAB_MAIN\r\n"
-                    + "ACCESS PARAMETERS\r\n" + "(\r\n" + "records delimited by newline\r\n"
-                    + "LOGFILE G2N_TAB_MAIN:'" + extrnlTableName + ".log'\r\n" + "BADFILE G2N_TAB_MAIN:'"
-                    + extrnlTableName + ".bad'\r\n" + "skip 1\r\n"
-                    + "fields terminated by ',' optionally enclosed BY '\"' LDRTRIM\r\n"
-                    + "missing field values are null\r\n" + ")\r\n" + "LOCATION ('" + loadCustomDataReqPo.getFileName()
-                    + "')\r\n" + ")  REJECT LIMIT UNLIMITED";
-            log.info(" {} ", externalSql);
-            PreparedStatement extrnlStmnt = con.prepareStatement(externalSql);
-            int extrnlCount = extrnlStmnt.executeUpdate();
-            log.info("{} -->count", extrnlCount);
-            extrnlStmnt.close();
+            String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            String externalTableName = custmTblDtls.getCustomTableName() + "_" + timestamp + "_EXT";
+
+            // Validate External Table Name (Prevent SQL Injection)
+            if (!externalTableName.matches("^[a-zA-Z0-9_]+$")) {
+                throw new SQLException("Invalid external table name: " + externalTableName);
+            }
+
+            // Create External Table
+            String externalSql = "CREATE TABLE " + externalTableName + " (" + metaDataColumnsPo.getMetaDataStr() + " )"
+                    + " ORGANIZATION EXTERNAL (TYPE ORACLE_LOADER DEFAULT DIRECTORY G2N_TAB_MAIN"
+                    + " ACCESS PARAMETERS (records delimited by newline"
+                    + " LOGFILE G2N_TAB_MAIN:'" + externalTableName + ".log'"
+                    + " BADFILE G2N_TAB_MAIN:'" + externalTableName + ".bad'"
+                    + " skip 1 fields terminated by ',' optionally enclosed BY '\"' LDRTRIM missing field values are null)"
+                    + " LOCATION ('" + fileName + "')) REJECT LIMIT UNLIMITED";
+
+            log.info("Creating External Table: {}", externalSql);
+            try (PreparedStatement extStmnt = con.prepareStatement(externalSql)) {
+                extStmnt.executeUpdate();
+            }
+
+            // Insert Data into Custom Table
+            String insertQuery = "INSERT INTO " + custmTblDtls.getCustomTableName() + " SELECT ?, b.* FROM " +
+                    "(SELECT " + metaDataColumnsPo.getColumnNames() + " FROM " + externalTableName + ") b";
+            log.info("Executing Insert Query: {}", insertQuery);
+
+            try (PreparedStatement insertStmnt = con.prepareStatement(insertQuery)) {
+                insertStmnt.setString(1, loadCustomDataReqPo.getCrBatchName());
+                insertCount = insertStmnt.executeUpdate();
+            }
+
+            // Read Bad File for Failed Records
             try {
-                //Insert Data into Custom Table
-                String executeQuery = "insert into " + custmTblDtls.getCustomTableName() + "  SELECT '"
-                        + loadCustomDataReqPo.getCrBatchName() + "',b.* FROM (SELECT " + metaDataColumnsPo.getColumnNames()
-                        + " FROM " + extrnlTableName + ") b";
-                log.info("{} --->Insert executeQuery", executeQuery);
-                PreparedStatement extStmnt = con.prepareStatement(executeQuery);
-                insertcount = extStmnt.executeUpdate();
-                extStmnt.close();
-                log.info("{} insertcount-->", insertcount);
-                try {
-                    if ("SFTP".equalsIgnoreCase(fileTransfer)) {
-                        inputStream = channelSftp.get(extrnlTableName + ".bad");
-                        if (inputStream != null) {
-                            failedCount = new BufferedReader(new InputStreamReader(channelSftp.get(extrnlTableName + ".bad")))
-                                    .lines().count();
-                            result = new BufferedReader(new InputStreamReader(channelSftp.get(extrnlTableName + ".bad")))
-                                    .lines().collect(Collectors.joining("\n"));
-                            logFileText = new BufferedReader(new InputStreamReader(channelSftp.get(extrnlTableName + ".log")))
-                                    .lines().collect(Collectors.joining("\n"));
-                            channelSftp.rm(extrnlTableName + ".bad");
-                        }
-                    } else if ("NFS".equalsIgnoreCase(fileTransfer)) {
-                        inputStream = new FileInputStream(fileUploadDir + extrnlTableName + ".bad");
-                        if (inputStream != null) {
-                            failedCount = new BufferedReader(new InputStreamReader(new FileInputStream(fileUploadDir + extrnlTableName + ".bad")))
-                                    .lines().count();
-                            result = new BufferedReader(new InputStreamReader(new FileInputStream(fileUploadDir + extrnlTableName + ".bad")))
-                                    .lines().collect(Collectors.joining("\n"));
-                            logFileText = new BufferedReader(new InputStreamReader(new FileInputStream(fileUploadDir + extrnlTableName + ".log")))
-                                    .lines().collect(Collectors.joining("\n"));
-                        }
-                    }
-                } catch (Exception e) {
-                    log.error("File Not Found --->" + extrnlTableName + ".bad");
-                    log.error("File Not Found --->" + e);
+                if ("SFTP".equalsIgnoreCase(fileTransfer)) {
+                    inputStream = channelSftp.get(externalTableName + ".bad");
+                } else if ("NFS".equalsIgnoreCase(fileTransfer)) {
+                    inputStream = new FileInputStream(fileUploadDir + externalTableName + ".bad");
                 }
-                CrCustomLoadDataFailedRecords crCustomLoadFailRecords = new CrCustomLoadDataFailedRecords();
-                crCustomLoadFailRecords.setCustomTableId(loadCustomDataReqPo.getCustomTableId());
-                crCustomLoadFailRecords.setFileName(fileName);
-                crCustomLoadFailRecords.setFailed(failedCount);
-                crCustomLoadFailRecords.setCrBatchName(loadCustomDataReqPo.getCrBatchName());
-                crCustomLoadFailRecords.setSuccess(insertcount);
-                crCustomLoadFailRecords.setFailedClob(result);
-                crCustomLoadFailRecords.setCreatedBy("ConvertRite");
-                crCustomLoadFailRecords.setCreationDate(new java.sql.Date(new Date().getTime()));
-                crCustomLoadFailRecords.setLastUpdateBy("ConvertRite");
-                crCustomLoadFailRecords.setLastUpdatedDate(new java.sql.Date(new Date().getTime()));
-                crCustomLoadFailRecords.setLogFileBlob(logFileText);
-                //Saving Custom Table Load Data Failed Records details
-                crCustomLoadFailRecordsRepo.save(crCustomLoadFailRecords);
+
+                if (inputStream != null) {
+                    failedCount = new BufferedReader(new InputStreamReader(inputStream)).lines().count();
+                    result = new BufferedReader(new InputStreamReader(inputStream)).lines().collect(Collectors.joining("\n"));
+                    logFileText = new BufferedReader(new InputStreamReader(new FileInputStream(fileUploadDir + externalTableName + ".log"))).lines().collect(Collectors.joining("\n"));
+                }
             } catch (Exception e) {
-                if (!Validations.isNullOrEmpty(extrnlTableName)) {
-                    PreparedStatement dropStmnt = con.prepareStatement("DROP TABLE " + extrnlTableName);
-                    int tableDeleted = dropStmnt.executeUpdate();
-                    log.info(" {} --> tableDeleted", tableDeleted);
-                    dropStmnt.close();
-                }
-                throw new Exception(e.getMessage());
-            }
-            PreparedStatement dropStmnt = con.prepareStatement("DROP TABLE " + extrnlTableName);
-            int tableDeleted = dropStmnt.executeUpdate();
-            log.info("{} --> external table Deleted", tableDeleted);
-            dropStmnt.close();
-
-            if (failedCount == 0) {
-                strMessage = "Successfully Loaded Data into Custom Table";
-            } else {
-                strMessage = failedCount + " records failed loading into Custom Table";
+                log.error("Error reading bad file for external table: {}", externalTableName, e);
             }
 
-            loadDataCustomTableResPo.setLoadedRecords(insertcount);
+            // Save Failed Records Log
+            CrCustomLoadDataFailedRecords failedRecords = new CrCustomLoadDataFailedRecords();
+            failedRecords.setCustomTableId(loadCustomDataReqPo.getCustomTableId());
+            failedRecords.setFileName(fileName);
+            failedRecords.setFailed(failedCount);
+            failedRecords.setCrBatchName(loadCustomDataReqPo.getCrBatchName());
+            failedRecords.setSuccess(insertCount);
+            failedRecords.setFailedClob(result);
+            failedRecords.setCreatedBy("ConvertRite");
+            failedRecords.setCreationDate(new java.sql.Date(System.currentTimeMillis()));
+            failedRecords.setLastUpdateBy("ConvertRite");
+            failedRecords.setLastUpdatedDate(new java.sql.Date(System.currentTimeMillis()));
+            failedRecords.setLogFileBlob(logFileText);
+
+            crCustomLoadFailRecordsRepo.save(failedRecords);
+
+            // Drop External Table
+            try (PreparedStatement dropStmnt = con.prepareStatement("DROP TABLE " + externalTableName)) {
+                dropStmnt.executeUpdate();
+            }
+
+            // Final Message
+            strMessage = (failedCount == 0) ? "Successfully Loaded Data into Custom Table" : failedCount + " records failed loading into Custom Table";
+
+            loadDataCustomTableResPo.setLoadedRecords(insertCount);
             loadDataCustomTableResPo.setFailedRecords(failedCount);
             loadDataCustomTableResPo.setCrBatchName(loadCustomDataReqPo.getCrBatchName());
             loadDataCustomTableResPo.setCustomTableName(custmTblDtls.getCustomTableName());
-        }finally {
+
+        } finally {
+            // Cleanup SFTP
             if (channelSftp != null) {
                 channelSftp.exit();
                 channelSftp.disconnect();
             }
-            if (jschSession != null)
+            if (jschSession != null) {
                 jschSession.disconnect();
-            if (con != null)
+            }
+            if (con != null) {
                 con.close();
+            }
         }
+
         basicResPo.setMessage(strMessage);
         basicResPo.setPayload(loadDataCustomTableResPo);
         return basicResPo;
     }
+
 
     @Override
     public void downloadCustmTblFailedRecLogFile(Long customTableId, String crBatchName, HttpServletResponse resp) throws Exception {
@@ -590,12 +747,12 @@ public class CrCustomTableServiceImpl implements CrCustomTableService {
             crCustomColumn.setTableId(tableId);
             crCustomColumn.setColumnId(i);
             crCustomColumn.setApplicationId(200);
-            if(StringUtils.isNotBlank(columns[1]))
-            crCustomColumn.setColumnName(columns[1].trim().toUpperCase());
+            if (StringUtils.isNotBlank(columns[1]))
+                crCustomColumn.setColumnName(columns[1].trim().toUpperCase());
             crCustomColumn.setUserColumnName(columns[2]);
             crCustomColumn.setColumnSequence(Integer.parseInt(columns[3]));
             crCustomColumn.setColumnType(columns[4]);
-            if(!(List.of("N","D","L").contains(columns[4]))) {
+            if (!(List.of("N", "D", "L").contains(columns[4]))) {
                 wdth = StringUtils.isBlank(columns[5]) ? defaultColumnWidth : Integer.parseInt(columns[5]);
             }
             crCustomColumn.setWidth(wdth);
@@ -664,7 +821,7 @@ public class CrCustomTableServiceImpl implements CrCustomTableService {
                 .map(array -> {
                     String dataType = "";
                     if ("V".equalsIgnoreCase(array[4])) {
-                        String width = StringUtils.isBlank(array[5])  ? String.valueOf(defaultColumnWidth) : array[5];
+                        String width = StringUtils.isBlank(array[5]) ? String.valueOf(defaultColumnWidth) : array[5];
                         dataType = "VARCHAR2(" + width + ")";
                     } else if ("N".equalsIgnoreCase(array[4])) {
                         dataType = "NUMBER";
