@@ -1030,7 +1030,6 @@ public class CrCldImportCustomRestApisServiceImpl {
     }
 
 
-
     private List<CrProjDffError> updateProjectDffRestApi(CustomRestApiReqPo customRestApiReqPo, ResultSet rs, List<CrProjDffError> projectErrorLi) throws Exception {
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -1975,19 +1974,32 @@ public class CrCldImportCustomRestApisServiceImpl {
 //            // e.printStackTrace();
 //        }
 //    }
+//
+
     public void updateCldStagingTable(String updateType, CustomRestApiReqPo customRestApiReqPo) throws SQLException {
         try {
             log.info("==============updateCldStagingTable=================" + customRestApiReqPo);
+
             HttpHeaders headers = new HttpHeaders();
             headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setBasicAuth(customRestApiReqPo.getCldUserName(), customRestApiReqPo.getCldPassword());
 
             log.info("TENANT-->" + customRestApiReqPo.getPodId());
+
             CrCloudTemplateHeadersView crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository
-                    .findById(customRestApiReqPo.getCldTemplateId()).get();
+                    .findById(customRestApiReqPo.getCldTemplateId())
+                    .orElseThrow(() -> new SQLException("Template not found with ID: " + customRestApiReqPo.getCldTemplateId()));
+
             String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
-            Connection con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
+
+            // ✅ Validate Table Name (Prevent SQL Injection)
+            if (!stagingTableName.matches("^[a-zA-Z0-9_]+$")) {
+                throw new SQLException("Invalid table name: " + stagingTableName);
+            }
+
+            Connection con = dynamicDataSourceBasedMultiTenantConnectionProvider
+                    .getConnection(String.valueOf(customRestApiReqPo.getPodId()));
 
             String selectQuery = "SELECT * FROM " + stagingTableName + " WHERE cr_batch_name = ?";
             PreparedStatement stmnt = con.prepareStatement(selectQuery);
@@ -2095,5 +2107,6 @@ public class CrCldImportCustomRestApisServiceImpl {
             log.error("Exception in updateCldStagingTable-->", e);
         }
     }
+
 
 }
