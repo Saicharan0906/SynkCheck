@@ -1,0 +1,388 @@
+2025-02-18 09:34:04 INFO  c.r.p.c.ConvertRiteApiApplication - Starting ConvertRiteApiApplication using Java 18.0.2 on DESKTOP-O0TCK7R with PID 6256 (E:\Core\CR20-SPR17-2024-MERGE\ConvertRite.CoreService\target\classes started by Admin in E:\Core\CR20-SPR17-2024-MERGE\ConvertRite.CoreService)
+2025-02-18 09:34:04 INFO  c.r.p.c.ConvertRiteApiApplication - The following profiles are active: dev
+2025-02-18 09:34:06 INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-02-18 09:34:06 INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 83 ms. Found 1 JPA repository interfaces.
+2025-02-18 09:34:06 INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-02-18 09:34:06 INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 4 ms. Found 0 JPA repository interfaces.
+2025-02-18 09:34:06 INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-02-18 09:34:07 INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 576 ms. Found 120 JPA repository interfaces.
+2025-02-18 09:34:08 INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'asyncConfig' of type [com.rite.products.convertrite.multitenancy.async.AsyncConfig$$EnhancerBySpringCGLIB$$ad873d2d] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-02-18 09:34:09 INFO  o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat initialized with port(s): 9000 (http)
+2025-02-18 09:34:09 INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-02-18 09:34:09 INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/9.0.53]
+2025-02-18 09:34:09 INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-02-18 09:34:09 INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 5130 ms
+2025-02-18 09:34:31 WARN  o.s.b.w.s.c.AnnotationConfigServletWebServerApplicationContext - Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'dataSourceScriptDatabaseInitializer' defined in class path resource [org/springframework/boot/autoconfigure/sql/init/DataSourceInitializationConfiguration.class]: Unsatisfied dependency expressed through method 'dataSourceScriptDatabaseInitializer' parameter 0; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'masterDataSourceConfig': Invocation of init method failed; nested exception is org.springframework.web.client.ResourceAccessException: I/O error on GET request for "https://cr20.convertrite.com/api/convertriteadmin/getDataSourceDetails": Connect to cr20.convertrite.com:443 [cr20.convertrite.com/129.80.100.183] failed: Connection timed out: connect; nested exception is org.apache.http.conn.HttpHostConnectException: Connect to cr20.convertrite.com:443 [cr20.convertrite.com/129.80.100.183] failed: Connection timed out: connect
+2025-02-18 09:34:31 INFO  org.apache.catalina.core.StandardService - Stopping service [Tomcat]
+2025-02-18 09:34:32 INFO  o.s.b.a.l.ConditionEvaluationReportLoggingListener - 
+
+Error starting ApplicationContext. To display the conditions report re-run your application with 'debug' enabled.
+2025-02-18 09:34:32 ERROR o.springframework.boot.SpringApplication - Application run failed
+org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'dataSourceScriptDatabaseInitializer' defined in class path resource [org/springframework/boot/autoconfigure/sql/init/DataSourceInitializationConfiguration.class]: Unsatisfied dependency expressed through method 'dataSourceScriptDatabaseInitializer' parameter 0; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'masterDataSourceConfig': Invocation of init method failed; nested exception is org.springframework.web.client.ResourceAccessException: I/O error on GET request for "https://cr20.convertrite.com/api/convertriteadmin/getDataSourceDetails": Connect to cr20.convertrite.com:443 [cr20.convertrite.com/129.80.100.183] failed: Connection timed out: connect; nested exception is org.apache.http.conn.HttpHostConnectException: Connect to cr20.convertrite.com:443 [cr20.convertrite.com/129.80.100.183] failed: Connection timed out: connect
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:800)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:541)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1352)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1195)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:582)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:542)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:335)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:333)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:208)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:322)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:208)
+	at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1154)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:908)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:583)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:145)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:754)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:434)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:338)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1343)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1332)
+	at com.rite.products.convertrite.ConvertRiteApiApplication.main(ConvertRiteApiApplication.java:49)
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'masterDataSourceConfig': Invocation of init method failed; nested exception is org.springframework.web.client.ResourceAccessException: I/O error on GET request for "https://cr20.convertrite.com/api/convertriteadmin/getDataSourceDetails": Connect to cr20.convertrite.com:443 [cr20.convertrite.com/129.80.100.183] failed: Connection timed out: connect; nested exception is org.apache.http.conn.HttpHostConnectException: Connect to cr20.convertrite.com:443 [cr20.convertrite.com/129.80.100.183] failed: Connection timed out: connect
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor.postProcessBeforeInitialization(InitDestroyAnnotationBeanPostProcessor.java:160)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.applyBeanPostProcessorsBeforeInitialization(AbstractAutowireCapableBeanFactory.java:440)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1796)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:620)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:542)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:335)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:333)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:208)
+	at org.springframework.beans.factory.support.ConstructorResolver.instantiateUsingFactoryMethod(ConstructorResolver.java:410)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.instantiateUsingFactoryMethod(AbstractAutowireCapableBeanFactory.java:1352)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1195)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:582)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:542)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:335)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:333)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:208)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:276)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1380)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1300)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:887)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:791)
+	... 21 common frames omitted
+Caused by: org.springframework.web.client.ResourceAccessException: I/O error on GET request for "https://cr20.convertrite.com/api/convertriteadmin/getDataSourceDetails": Connect to cr20.convertrite.com:443 [cr20.convertrite.com/129.80.100.183] failed: Connection timed out: connect; nested exception is org.apache.http.conn.HttpHostConnectException: Connect to cr20.convertrite.com:443 [cr20.convertrite.com/129.80.100.183] failed: Connection timed out: connect
+	at org.springframework.web.client.RestTemplate.doExecute(RestTemplate.java:785)
+	at org.springframework.web.client.RestTemplate.execute(RestTemplate.java:711)
+	at org.springframework.web.client.RestTemplate.exchange(RestTemplate.java:602)
+	at com.rite.products.convertrite.multitenancy.config.master.ConfigurationService.fetchDataSourceProperties(ConfigurationService.java:32)
+	at com.rite.products.convertrite.multitenancy.config.master.MasterDataSourceConfig.init(MasterDataSourceConfig.java:27)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:577)
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor$LifecycleElement.invoke(InitDestroyAnnotationBeanPostProcessor.java:389)
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor$LifecycleMetadata.invokeInitMethods(InitDestroyAnnotationBeanPostProcessor.java:333)
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor.postProcessBeforeInitialization(InitDestroyAnnotationBeanPostProcessor.java:157)
+	... 43 common frames omitted
+Caused by: org.apache.http.conn.HttpHostConnectException: Connect to cr20.convertrite.com:443 [cr20.convertrite.com/129.80.100.183] failed: Connection timed out: connect
+	at org.apache.http.impl.conn.DefaultHttpClientConnectionOperator.connect(DefaultHttpClientConnectionOperator.java:156)
+	at org.apache.http.impl.conn.PoolingHttpClientConnectionManager.connect(PoolingHttpClientConnectionManager.java:376)
+	at org.apache.http.impl.execchain.MainClientExec.establishRoute(MainClientExec.java:393)
+	at org.apache.http.impl.execchain.MainClientExec.execute(MainClientExec.java:236)
+	at org.apache.http.impl.execchain.ProtocolExec.execute(ProtocolExec.java:186)
+	at org.apache.http.impl.execchain.RetryExec.execute(RetryExec.java:89)
+	at org.apache.http.impl.execchain.RedirectExec.execute(RedirectExec.java:110)
+	at org.apache.http.impl.client.InternalHttpClient.doExecute(InternalHttpClient.java:185)
+	at org.apache.http.impl.client.CloseableHttpClient.execute(CloseableHttpClient.java:83)
+	at org.apache.http.impl.client.CloseableHttpClient.execute(CloseableHttpClient.java:56)
+	at org.springframework.http.client.HttpComponentsClientHttpRequest.executeInternal(HttpComponentsClientHttpRequest.java:87)
+	at org.springframework.http.client.AbstractBufferingClientHttpRequest.executeInternal(AbstractBufferingClientHttpRequest.java:48)
+	at org.springframework.http.client.AbstractClientHttpRequest.execute(AbstractClientHttpRequest.java:66)
+	at org.springframework.web.client.RestTemplate.doExecute(RestTemplate.java:776)
+	... 52 common frames omitted
+Caused by: java.net.ConnectException: Connection timed out: connect
+	at java.base/sun.nio.ch.Net.connect0(Native Method)
+	at java.base/sun.nio.ch.Net.connect(Net.java:579)
+	at java.base/sun.nio.ch.Net.connect(Net.java:568)
+	at java.base/sun.nio.ch.NioSocketImpl.connect(NioSocketImpl.java:585)
+	at java.base/java.net.SocksSocketImpl.connect(SocksSocketImpl.java:327)
+	at java.base/java.net.Socket.connect(Socket.java:633)
+	at org.apache.http.conn.ssl.SSLConnectionSocketFactory.connectSocket(SSLConnectionSocketFactory.java:368)
+	at org.apache.http.impl.conn.DefaultHttpClientConnectionOperator.connect(DefaultHttpClientConnectionOperator.java:142)
+	... 65 common frames omitted
+2025-02-18 09:34:58 INFO  c.r.p.c.ConvertRiteApiApplication - Starting ConvertRiteApiApplication using Java 18.0.2 on DESKTOP-O0TCK7R with PID 5372 (E:\Core\CR20-SPR17-2024-MERGE\ConvertRite.CoreService\target\classes started by Admin in E:\Core\CR20-SPR17-2024-MERGE\ConvertRite.CoreService)
+2025-02-18 09:34:59 INFO  c.r.p.c.ConvertRiteApiApplication - The following profiles are active: test
+2025-02-18 09:35:01 INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-02-18 09:35:01 INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 49 ms. Found 1 JPA repository interfaces.
+2025-02-18 09:35:01 INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-02-18 09:35:01 INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 3 ms. Found 0 JPA repository interfaces.
+2025-02-18 09:35:01 INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-02-18 09:35:01 INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 474 ms. Found 120 JPA repository interfaces.
+2025-02-18 09:35:02 INFO  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'asyncConfig' of type [com.rite.products.convertrite.multitenancy.async.AsyncConfig$$EnhancerBySpringCGLIB$$6cde6773] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+2025-02-18 09:35:03 INFO  o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat initialized with port(s): 9000 (http)
+2025-02-18 09:35:03 INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-02-18 09:35:03 INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/9.0.53]
+2025-02-18 09:35:03 INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-02-18 09:35:03 INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 4837 ms
+2025-02-18 09:35:06 INFO  c.r.p.c.m.c.master.ConfigurationService - Response-->{"url":"jdbc:postgresql://129.80.15.245:5000/postgres","username":"postgres","password":"M8*Ny=h@"}
+2025-02-18 09:35:06 INFO  o.hibernate.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: master-persistence-unit]
+2025-02-18 09:35:06 INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 5.4.32.Final
+2025-02-18 09:35:06 INFO  org.hibernate.annotations.common.Version - HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
+2025-02-18 09:35:07 INFO  org.hibernate.dialect.Dialect - HHH000400: Using dialect: org.hibernate.dialect.PostgreSQLDialect
+2025-02-18 09:35:08 INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2025-02-18 09:35:08 INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'master-persistence-unit'
+2025-02-18 09:35:08 INFO  o.hibernate.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: tenant-persistence-unit]
+2025-02-18 09:35:09 INFO  org.hibernate.dialect.Dialect - HHH000400: Using dialect: org.hibernate.dialect.Oracle12cDialect
+2025-02-18 09:35:09 WARN  o.h.b.i.InFlightMetadataCollectorImpl - HHH000069: Duplicate generator name process_requests_generator
+2025-02-18 09:35:09 WARN  org.hibernate.mapping.RootClass - HHH000038: Composite-id class does not override equals(): com.rite.products.convertrite.model.XxrFormulaColumnsId
+2025-02-18 09:35:09 WARN  org.hibernate.mapping.RootClass - HHH000039: Composite-id class does not override hashCode(): com.rite.products.convertrite.model.XxrFormulaColumnsId
+2025-02-18 09:35:09 WARN  org.hibernate.mapping.RootClass - HHH000038: Composite-id class does not override equals(): com.rite.products.convertrite.model.XxrRoleObjectLinksId
+2025-02-18 09:35:09 WARN  org.hibernate.mapping.RootClass - HHH000039: Composite-id class does not override hashCode(): com.rite.products.convertrite.model.XxrRoleObjectLinksId
+2025-02-18 09:35:09 WARN  org.hibernate.mapping.RootClass - HHH000038: Composite-id class does not override equals(): com.rite.products.convertrite.model.CloudTableId
+2025-02-18 09:35:09 WARN  org.hibernate.mapping.RootClass - HHH000039: Composite-id class does not override hashCode(): com.rite.products.convertrite.model.CloudTableId
+2025-02-18 09:35:09 WARN  org.hibernate.mapping.RootClass - HHH000038: Composite-id class does not override equals(): com.rite.products.convertrite.model.XxrProjectsId
+2025-02-18 09:35:09 WARN  org.hibernate.mapping.RootClass - HHH000039: Composite-id class does not override hashCode(): com.rite.products.convertrite.model.XxrProjectsId
+2025-02-18 09:35:09 WARN  org.hibernate.mapping.RootClass - HHH000038: Composite-id class does not override equals(): com.rite.products.convertrite.model.CrCustomColumnId
+2025-02-18 09:35:09 WARN  org.hibernate.mapping.RootClass - HHH000039: Composite-id class does not override hashCode(): com.rite.products.convertrite.model.CrCustomColumnId
+2025-02-18 09:35:09 WARN  org.hibernate.mapping.RootClass - HHH000038: Composite-id class does not override equals(): com.rite.products.convertrite.model.XxrUserRolesId
+2025-02-18 09:35:09 WARN  org.hibernate.mapping.RootClass - HHH000039: Composite-id class does not override hashCode(): com.rite.products.convertrite.model.XxrUserRolesId
+2025-02-18 09:35:09 WARN  org.hibernate.mapping.RootClass - HHH000038: Composite-id class does not override equals(): com.rite.products.convertrite.model.XxrFormulaTablesId
+2025-02-18 09:35:09 WARN  org.hibernate.mapping.RootClass - HHH000039: Composite-id class does not override hashCode(): com.rite.products.convertrite.model.XxrFormulaTablesId
+2025-02-18 09:35:10 INFO  org.hibernate.tuple.PojoInstantiator - HHH000182: No default (no-argument) constructor for class: com.rite.products.convertrite.model.CrBatchProcessDetails (class must be instantiated by Interceptor)
+2025-02-18 09:35:11 INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2025-02-18 09:35:11 INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'tenant-persistence-unit'
+2025-02-18 09:35:15 INFO  o.s.b.a.e.web.EndpointLinksResolver - Exposing 1 endpoint(s) beneath base path '/actuator'
+2025-02-18 09:35:15 INFO  o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: ac7d731f-3093-4ac9-8e7e-50b598b45020
+
+2025-02-18 09:35:15 INFO  c.r.p.c.configuration.JwtSecurityConfig - entering configure Method####
+2025-02-18 09:35:15 INFO  s.d.s.w.PropertySourcedRequestMappingHandlerMapping - Mapped URL path [/v2/api-docs] onto method [springfox.documentation.swagger2.web.Swagger2Controller#getDocumentation(String, HttpServletRequest)]
+2025-02-18 09:35:15 INFO  o.s.s.web.DefaultSecurityFilterChain - Will secure any request with [org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@5daf0cb0, org.springframework.security.web.context.SecurityContextPersistenceFilter@288aaeaf, org.springframework.security.web.header.HeaderWriterFilter@67cd2d0a, org.springframework.web.filter.CorsFilter@70e1a8ab, org.springframework.security.web.csrf.CsrfFilter@4926023f, org.springframework.security.web.authentication.logout.LogoutFilter@669cb3c7, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@30c94321, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@25bfc73, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@43ffaeb8, org.springframework.security.web.session.SessionManagementFilter@2f8892c5, org.springframework.security.web.access.ExceptionTranslationFilter@994d48d, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@42046dbf]
+2025-02-18 09:35:16 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - DynamicDataSources based multitenancy enabled
+2025-02-18 09:35:16 INFO  com.zaxxer.hikari.HikariDataSource - masterDataSource - Starting...
+2025-02-18 09:35:17 INFO  com.zaxxer.hikari.HikariDataSource - masterDataSource - Start completed.
+2025-02-18 09:35:18 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Initializing dynamic datasource for tenant 240
+2025-02-18 09:35:20 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Dynamic datasource ran for tenant 240
+2025-02-18 09:35:20 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Initializing dynamic datasource for tenant 181
+2025-02-18 09:35:23 ERROR c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Failed to initialize dynamic datasource for tenant 181
+java.sql.SQLException: ORA-28001: the password has expired
+
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:509)
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:456)
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:451)
+	at oracle.jdbc.driver.T4CTTIfun.processError(T4CTTIfun.java:1040)
+	at oracle.jdbc.driver.T4CTTIoauthenticate.processError(T4CTTIoauthenticate.java:552)
+	at oracle.jdbc.driver.T4CTTIfun.receive(T4CTTIfun.java:550)
+	at oracle.jdbc.driver.T4CTTIfun.doRPC(T4CTTIfun.java:268)
+	at oracle.jdbc.driver.T4CTTIoauthenticate.doOAUTH(T4CTTIoauthenticate.java:501)
+	at oracle.jdbc.driver.T4CTTIoauthenticate.doOAUTH(T4CTTIoauthenticate.java:1292)
+	at oracle.jdbc.driver.T4CTTIoauthenticate.doOAUTH(T4CTTIoauthenticate.java:1025)
+	at oracle.jdbc.driver.T4CConnection.logon(T4CConnection.java:743)
+	at oracle.jdbc.driver.PhysicalConnection.connect(PhysicalConnection.java:793)
+	at oracle.jdbc.driver.T4CDriverExtension.getConnection(T4CDriverExtension.java:57)
+	at oracle.jdbc.driver.OracleDriver.connect(OracleDriver.java:747)
+	at oracle.jdbc.driver.OracleDriver.connect(OracleDriver.java:562)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:683)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:230)
+	at com.rite.products.convertrite.multitenancy.config.tenant.hibernate.DynamicDataSourceBasedMultiTenantSpring.runOnAllTenants(DynamicDataSourceBasedMultiTenantSpring.java:46)
+	at com.rite.products.convertrite.multitenancy.config.tenant.hibernate.DynamicDataSourceBasedMultiTenantSpring.afterPropertiesSet(DynamicDataSourceBasedMultiTenantSpring.java:40)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1863)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1800)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:620)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:542)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:335)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:333)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:208)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:944)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:918)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:583)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:145)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:754)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:434)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:338)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1343)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1332)
+	at com.rite.products.convertrite.ConvertRiteApiApplication.main(ConvertRiteApiApplication.java:49)
+2025-02-18 09:35:23 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Dynamic datasource ran for tenant 181
+2025-02-18 09:35:23 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Initializing dynamic datasource for tenant 205
+2025-02-18 09:35:25 ERROR c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Failed to initialize dynamic datasource for tenant 205
+java.sql.SQLException: ORA-28001: the password has expired
+
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:509)
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:456)
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:451)
+	at oracle.jdbc.driver.T4CTTIfun.processError(T4CTTIfun.java:1040)
+	at oracle.jdbc.driver.T4CTTIoauthenticate.processError(T4CTTIoauthenticate.java:552)
+	at oracle.jdbc.driver.T4CTTIfun.receive(T4CTTIfun.java:550)
+	at oracle.jdbc.driver.T4CTTIfun.doRPC(T4CTTIfun.java:268)
+	at oracle.jdbc.driver.T4CTTIoauthenticate.doOAUTH(T4CTTIoauthenticate.java:501)
+	at oracle.jdbc.driver.T4CTTIoauthenticate.doOAUTH(T4CTTIoauthenticate.java:1292)
+	at oracle.jdbc.driver.T4CTTIoauthenticate.doOAUTH(T4CTTIoauthenticate.java:1025)
+	at oracle.jdbc.driver.T4CConnection.logon(T4CConnection.java:743)
+	at oracle.jdbc.driver.PhysicalConnection.connect(PhysicalConnection.java:793)
+	at oracle.jdbc.driver.T4CDriverExtension.getConnection(T4CDriverExtension.java:57)
+	at oracle.jdbc.driver.OracleDriver.connect(OracleDriver.java:747)
+	at oracle.jdbc.driver.OracleDriver.connect(OracleDriver.java:562)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:683)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:230)
+	at com.rite.products.convertrite.multitenancy.config.tenant.hibernate.DynamicDataSourceBasedMultiTenantSpring.runOnAllTenants(DynamicDataSourceBasedMultiTenantSpring.java:46)
+	at com.rite.products.convertrite.multitenancy.config.tenant.hibernate.DynamicDataSourceBasedMultiTenantSpring.afterPropertiesSet(DynamicDataSourceBasedMultiTenantSpring.java:40)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1863)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1800)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:620)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:542)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:335)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:333)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:208)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:944)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:918)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:583)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:145)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:754)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:434)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:338)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1343)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1332)
+	at com.rite.products.convertrite.ConvertRiteApiApplication.main(ConvertRiteApiApplication.java:49)
+2025-02-18 09:35:25 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Dynamic datasource ran for tenant 205
+2025-02-18 09:35:25 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Initializing dynamic datasource for tenant 229
+2025-02-18 09:35:27 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Dynamic datasource ran for tenant 229
+2025-02-18 09:35:27 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Initializing dynamic datasource for tenant 182
+2025-02-18 09:35:29 ERROR c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Failed to initialize dynamic datasource for tenant 182
+java.sql.SQLException: ORA-28001: the password has expired
+
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:509)
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:456)
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:451)
+	at oracle.jdbc.driver.T4CTTIfun.processError(T4CTTIfun.java:1040)
+	at oracle.jdbc.driver.T4CTTIoauthenticate.processError(T4CTTIoauthenticate.java:552)
+	at oracle.jdbc.driver.T4CTTIfun.receive(T4CTTIfun.java:550)
+	at oracle.jdbc.driver.T4CTTIfun.doRPC(T4CTTIfun.java:268)
+	at oracle.jdbc.driver.T4CTTIoauthenticate.doOAUTH(T4CTTIoauthenticate.java:501)
+	at oracle.jdbc.driver.T4CTTIoauthenticate.doOAUTH(T4CTTIoauthenticate.java:1292)
+	at oracle.jdbc.driver.T4CTTIoauthenticate.doOAUTH(T4CTTIoauthenticate.java:1025)
+	at oracle.jdbc.driver.T4CConnection.logon(T4CConnection.java:743)
+	at oracle.jdbc.driver.PhysicalConnection.connect(PhysicalConnection.java:793)
+	at oracle.jdbc.driver.T4CDriverExtension.getConnection(T4CDriverExtension.java:57)
+	at oracle.jdbc.driver.OracleDriver.connect(OracleDriver.java:747)
+	at oracle.jdbc.driver.OracleDriver.connect(OracleDriver.java:562)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:683)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:230)
+	at com.rite.products.convertrite.multitenancy.config.tenant.hibernate.DynamicDataSourceBasedMultiTenantSpring.runOnAllTenants(DynamicDataSourceBasedMultiTenantSpring.java:46)
+	at com.rite.products.convertrite.multitenancy.config.tenant.hibernate.DynamicDataSourceBasedMultiTenantSpring.afterPropertiesSet(DynamicDataSourceBasedMultiTenantSpring.java:40)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1863)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1800)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:620)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:542)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:335)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:333)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:208)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:944)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:918)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:583)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:145)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:754)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:434)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:338)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1343)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1332)
+	at com.rite.products.convertrite.ConvertRiteApiApplication.main(ConvertRiteApiApplication.java:49)
+2025-02-18 09:35:29 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Dynamic datasource ran for tenant 182
+2025-02-18 09:35:29 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Initializing dynamic datasource for tenant 232
+2025-02-18 09:35:32 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Dynamic datasource ran for tenant 232
+2025-02-18 09:35:32 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Initializing dynamic datasource for tenant 233
+2025-02-18 09:35:34 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Dynamic datasource ran for tenant 233
+2025-02-18 09:35:34 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Initializing dynamic datasource for tenant 245
+2025-02-18 09:35:37 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Dynamic datasource ran for tenant 245
+2025-02-18 09:35:37 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Initializing dynamic datasource for tenant 246
+2025-02-18 09:35:39 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Dynamic datasource ran for tenant 246
+2025-02-18 09:35:39 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Initializing dynamic datasource for tenant 214
+2025-02-18 09:35:42 ERROR c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Failed to initialize dynamic datasource for tenant 214
+java.sql.SQLException: ORA-28001: the password has expired
+
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:509)
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:456)
+	at oracle.jdbc.driver.T4CTTIoer11.processError(T4CTTIoer11.java:451)
+	at oracle.jdbc.driver.T4CTTIfun.processError(T4CTTIfun.java:1040)
+	at oracle.jdbc.driver.T4CTTIoauthenticate.processError(T4CTTIoauthenticate.java:552)
+	at oracle.jdbc.driver.T4CTTIfun.receive(T4CTTIfun.java:550)
+	at oracle.jdbc.driver.T4CTTIfun.doRPC(T4CTTIfun.java:268)
+	at oracle.jdbc.driver.T4CTTIoauthenticate.doOAUTH(T4CTTIoauthenticate.java:501)
+	at oracle.jdbc.driver.T4CTTIoauthenticate.doOAUTH(T4CTTIoauthenticate.java:1292)
+	at oracle.jdbc.driver.T4CTTIoauthenticate.doOAUTH(T4CTTIoauthenticate.java:1025)
+	at oracle.jdbc.driver.T4CConnection.logon(T4CConnection.java:743)
+	at oracle.jdbc.driver.PhysicalConnection.connect(PhysicalConnection.java:793)
+	at oracle.jdbc.driver.T4CDriverExtension.getConnection(T4CDriverExtension.java:57)
+	at oracle.jdbc.driver.OracleDriver.connect(OracleDriver.java:747)
+	at oracle.jdbc.driver.OracleDriver.connect(OracleDriver.java:562)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:683)
+	at java.sql/java.sql.DriverManager.getConnection(DriverManager.java:230)
+	at com.rite.products.convertrite.multitenancy.config.tenant.hibernate.DynamicDataSourceBasedMultiTenantSpring.runOnAllTenants(DynamicDataSourceBasedMultiTenantSpring.java:46)
+	at com.rite.products.convertrite.multitenancy.config.tenant.hibernate.DynamicDataSourceBasedMultiTenantSpring.afterPropertiesSet(DynamicDataSourceBasedMultiTenantSpring.java:40)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1863)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1800)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:620)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:542)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:335)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:333)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:208)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:944)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:918)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:583)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:145)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:754)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:434)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:338)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1343)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1332)
+	at com.rite.products.convertrite.ConvertRiteApiApplication.main(ConvertRiteApiApplication.java:49)
+2025-02-18 09:35:42 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Dynamic datasource ran for tenant 214
+2025-02-18 09:35:42 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Initializing dynamic datasource for tenant 252
+2025-02-18 09:35:44 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Dynamic datasource ran for tenant 252
+2025-02-18 09:35:44 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Initializing dynamic datasource for tenant 256
+2025-02-18 09:35:46 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Dynamic datasource ran for tenant 256
+2025-02-18 09:35:46 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Initializing dynamic datasource for tenant 243
+2025-02-18 09:35:49 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Dynamic datasource ran for tenant 243
+2025-02-18 09:35:49 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Initializing dynamic datasource for tenant 257
+2025-02-18 09:35:51 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Dynamic datasource ran for tenant 257
+2025-02-18 09:35:51 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Initializing dynamic datasource for tenant 258
+2025-02-18 09:35:54 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Dynamic datasource ran for tenant 258
+2025-02-18 09:35:54 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Initializing dynamic datasource for tenant 259
+2025-02-18 09:35:56 INFO  c.r.p.c.m.c.t.h.DynamicDataSourceBasedMultiTenantSpring - Dynamic datasource ran for tenant 259
+2025-02-18 09:35:56 INFO  o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat started on port(s): 9000 (http) with context path ''
+2025-02-18 09:35:56 INFO  s.d.s.w.p.DocumentationPluginsBootstrapper - Context refreshed
+2025-02-18 09:35:56 INFO  s.d.s.w.p.DocumentationPluginsBootstrapper - Found 1 custom documentation plugin(s)
+2025-02-18 09:35:56 INFO  s.d.s.w.s.ApiListingReferenceScanner - Scanning for api listing references
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: downloadEssJobDetailsUsingGET_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: getTemplatesStatisticsUsingGET_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: getMappingSetByIDUsingGET_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: getMappingSetValuesByIdUsingGET_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: saveAllMappingValuesUsingPOST_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: generateSequenceUsingPOST_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: generateHdlFromLobUsingGET_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: getBatchNamesUsingGET_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: getRecordsPostJobExecutionUsingPOST_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: onFallbackmethodUsingPOST_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: loadAndImportDataV1UsingPOST_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: getFbdiColumnSequenceUsingGET_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: getFbdiTemplateColumnsUsingGET_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: getFbdiTemplatesUsingGET_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: saveFbdiTemplateColumnsUsingPOST_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: saveFbdiTemplateHdrsUsingPOST_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: uploadCtlGetColumnSeqUsingPOST_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: getAllSourceObjectsUsingGET_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: getCloudColumnsUsingGET_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: getSourceColumnsUsingGET_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: getParentObjectCodeByRoleUsingGET_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: getProjectsByRoleUsingGET_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: downloadSourceFileUsingGET_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: loadHdlCloudMetaDataUsingPOST_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: loadMetaDataFromCloudUsingPOST_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: uploadFileUsingPOST_1
+2025-02-18 09:35:57 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: saveRoleObjectUsingPOST_1
+2025-02-18 09:35:58 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: createDynamicViewUsingPOST_1
+2025-02-18 09:35:58 INFO  s.d.s.w.r.o.CachingOperationNameGenerator - Generating unique operation named: getSheetNameUsingGET_1
+2025-02-18 09:35:58 INFO  c.r.p.c.ConvertRiteApiApplication - Started ConvertRiteApiApplication in 59.724 seconds (JVM running for 60.811)
+2025-02-18 09:38:09 INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'tenant-persistence-unit'
+2025-02-18 09:38:09 INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'master-persistence-unit'
+2025-02-18 09:38:09 INFO  com.zaxxer.hikari.HikariDataSource - masterDataSource - Shutdown initiated...
+2025-02-18 09:38:09 INFO  com.zaxxer.hikari.HikariDataSource - masterDataSource - Shutdown completed.

@@ -1,0 +1,120 @@
+package com.rite.products.convertrite.controller;
+
+import com.rite.products.convertrite.exception.ConvertRiteException;
+import com.rite.products.convertrite.po.CustomRestApiReqPo;
+import com.rite.products.convertrite.service.BankAccountErrorService;
+import com.rite.products.convertrite.service.CrCldImportCustomRestApisServiceImpl;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+
+@RestController
+@RequestMapping("/api/convertritecore/cloudimport")
+public class CrCldImportCustomRestApisController {
+
+    @Autowired
+    CrCldImportCustomRestApisServiceImpl cldImportCustomRestApisServiceImpl;
+    @Autowired
+    private BankAccountErrorService bankAccountErrorService;
+    @ApiOperation(value = "This api is for creating bank & branches")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful Response"), @ApiResponse(code = 500, message = "Server Side Error"), @ApiResponse(code = 400, message = "Bad Request")})
+    @PostMapping("/createbankandbranches")
+    public ResponseEntity<?> createBankAndBranches(@RequestBody CustomRestApiReqPo customRestApiReqPo) throws Exception {
+        cldImportCustomRestApisServiceImpl.createBankAndBranches(customRestApiReqPo);
+        return new ResponseEntity<>("successful", HttpStatus.OK);
+    }
+    @ApiOperation(value = "This api is for creating banks")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful Response"), @ApiResponse(code = 500, message = "Server Side Error"), @ApiResponse(code = 400, message = "Bad Request")})
+    @PostMapping("/createbank")
+    public ResponseEntity<?> createOrUpdateBank(@RequestBody CustomRestApiReqPo customRestApiReqPo) throws Exception {
+        cldImportCustomRestApisServiceImpl.createOrUpdateBank(customRestApiReqPo);
+        return new ResponseEntity<>("successful", HttpStatus.OK);
+    }
+    @ApiOperation(value = "This api is for creating branches")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful Response"), @ApiResponse(code = 500, message = "Server Side Error"), @ApiResponse(code = 400, message = "Bad Request")})
+    @PostMapping("/createbranch")
+    public ResponseEntity<?> createOrUpdateBranch(@RequestBody CustomRestApiReqPo customRestApiReqPo) throws Exception {
+        cldImportCustomRestApisServiceImpl.createOrUpdateBranch(customRestApiReqPo);
+        return new ResponseEntity<>("successful", HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "This api is for creating bank account")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful Response"), @ApiResponse(code = 500, message = "Server Side Error"), @ApiResponse(code = 400, message = "Bad Request")})
+    @PostMapping("/createbankaccount")
+    public ResponseEntity<?> createOrUpdateBankAccount(@RequestBody CustomRestApiReqPo customRestApiReqPo) throws Exception {
+        cldImportCustomRestApisServiceImpl.createOrUpdateBankAccount(customRestApiReqPo);
+        return new ResponseEntity<>("successful", HttpStatus.OK);
+    }
+    @ApiOperation(value = "This api is for updating project DFF fields")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful Response"), @ApiResponse(code = 500, message = "Server Side Error"), @ApiResponse(code = 400, message = "Bad Request")})
+    @PostMapping("/updateprojectdff")
+    public ResponseEntity<?> updateProjectDff(@RequestBody CustomRestApiReqPo customRestApiReqPo) throws Exception {
+        cldImportCustomRestApisServiceImpl.updateProjectDff(customRestApiReqPo);
+        return new ResponseEntity<>("successful", HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "This api is for tax registrations")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful Response"), @ApiResponse(code = 500, message = "Server Side Error"), @ApiResponse(code = 400, message = "Bad Request")})
+    @PostMapping("/supplierTaxProfileUpdate")
+    public ResponseEntity<?> supplierTaxProfileUpdate(@RequestBody CustomRestApiReqPo customRestApiReqPo) throws Exception {
+        cldImportCustomRestApisServiceImpl.supplierTaxProfileUpdate(customRestApiReqPo);
+        return new ResponseEntity<>("successful", HttpStatus.OK);
+    }
+
+    @ApiOperation("This Api is for validate ccid")
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Successful Response"),
+            @ApiResponse(code = 500, message = "Server Side Error") })
+    @PostMapping("/validateccid")
+    public ResponseEntity<?> validateCcid(@RequestBody CustomRestApiReqPo customRestApiReqPo)
+            throws Exception {
+            cldImportCustomRestApisServiceImpl.validateCcid(customRestApiReqPo);
+        return new ResponseEntity<String>("successful", HttpStatus.OK);
+    }
+    @ApiOperation("This Api updates Bank Number,Branch Number,Bank Account Id")
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Successful Response"),
+            @ApiResponse(code = 500, message = "Server Side Error") })
+    @PostMapping("/update/{updateType}")
+    public ResponseEntity<?> updateCldStagingTable(@PathVariable String updateType, @RequestBody CustomRestApiReqPo customRestApiReqPo)
+            throws Exception {
+        cldImportCustomRestApisServiceImpl.updateCldStagingTable(updateType,customRestApiReqPo);
+        return new ResponseEntity<String>("successful", HttpStatus.OK);
+    }
+
+    @GetMapping("/download-bank-account-error-records")
+    public ResponseEntity<byte[]> downloadBankAccountErrorRecords(@RequestParam Long cldTempId,@RequestParam String batchName) {
+        try {
+            byte[] csvData = bankAccountErrorService.downloadBankAccountErrorRecords(cldTempId,batchName);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_TYPE, "text/csv");
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=bank_account_errors.csv");
+            headers.setContentLength(csvData.length);
+
+            return new ResponseEntity<>(csvData, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping("/download-bank-or-branches-error-records")
+    public ResponseEntity<byte[]> downloadBankOrBranchesErrorRecords(@RequestParam Long cldTempId,@RequestParam String batchName) {
+        try {
+            byte[] csvData = bankAccountErrorService.downloadBankOrBranchesErrorRecords(cldTempId,batchName);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_TYPE, "text/csv");
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=bank_errors.csv");
+            headers.setContentLength(csvData.length);
+
+            return new ResponseEntity<>(csvData, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+}
