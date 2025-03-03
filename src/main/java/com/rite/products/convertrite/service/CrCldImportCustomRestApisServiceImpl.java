@@ -938,6 +938,51 @@ public class CrCldImportCustomRestApisServiceImpl {
 //                con.close();
 //        }
 //    }
+//    public void updateProjectDff(CustomRestApiReqPo customRestApiReqPo) throws Exception {
+//        log.info("Start of updateProjectDff method in service ##");
+//        Connection con = null;
+//
+//        CrCloudTemplateHeadersView crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository
+//                .findById(customRestApiReqPo.getCldTemplateId())
+//                .orElseThrow(() -> new RuntimeException("Template not found"));
+//
+//        String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
+//
+//        //  Validate Table Name (Only Alphanumeric + Underscore)
+//        if (!stagingTableName.matches("^[a-zA-Z0-9_]+$")) {
+//            throw new SQLException("Invalid table name: " + stagingTableName);
+//        }
+//
+//        try {
+//            CrCloudJobStatus crCloudJobStatus = insertIntoCrCloudJobStatus(customRestApiReqPo, Status.COMPLETED.getStatus());
+//            log.info("TENANT-->" + customRestApiReqPo.getPodId());
+//
+//            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(
+//                    String.valueOf(customRestApiReqPo.getPodId())
+//            );
+//
+//            // Secure Prepared Statement
+//            String query = "SELECT * FROM " + stagingTableName + " WHERE CR_BATCH_NAME = ?";
+//            PreparedStatement stmnt = con.prepareStatement(query);
+//            stmnt.setString(1, customRestApiReqPo.getBatchName());
+//
+//            ResultSet rs = stmnt.executeQuery();
+//            List<CrProjDffError> projectErrorLi = new ArrayList<>();
+//
+//            // Update ProjectDFF Rest API call
+//            while (rs.next()) {
+//                projectErrorLi = updateProjectDffRestApi(customRestApiReqPo, rs, projectErrorLi);
+//            }
+//
+//            if (!projectErrorLi.isEmpty()) {
+//                crProjDffErrorRepository.saveAll(projectErrorLi);
+//            }
+//        } finally {
+//            if (con != null) {
+//                con.close();
+//            }
+//        }
+//    }
     public void updateProjectDff(CustomRestApiReqPo customRestApiReqPo) throws Exception {
         log.info("Start of updateProjectDff method in service ##");
         Connection con = null;
@@ -948,7 +993,7 @@ public class CrCldImportCustomRestApisServiceImpl {
 
         String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
 
-        //  Validate Table Name (Only Alphanumeric + Underscore)
+        // Validate Table Name (Only Alphanumeric + Underscore)
         if (!stagingTableName.matches("^[a-zA-Z0-9_]+$")) {
             throw new SQLException("Invalid table name: " + stagingTableName);
         }
@@ -983,6 +1028,7 @@ public class CrCldImportCustomRestApisServiceImpl {
             }
         }
     }
+
 
 
     private List<CrProjDffError> updateProjectDffRestApi(CustomRestApiReqPo customRestApiReqPo, ResultSet rs, List<CrProjDffError> projectErrorLi) throws Exception {
@@ -1022,39 +1068,93 @@ public class CrCldImportCustomRestApisServiceImpl {
         return projectErrorLi;
     }
 
+//
+//    public void supplierTaxProfileUpdate(CustomRestApiReqPo customRestApiReqPo) throws Exception {
+//        log.info("Start of supplierTaxProfileUpdate in service ###");
+//        Connection con = null;
+//        List<CrSupplierTaxProfileErrors> errorsList = new ArrayList<>();
+//        CrCloudTemplateHeadersView crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository.findById(customRestApiReqPo.getCldTemplateId()).get();
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        headers.setBasicAuth(customRestApiReqPo.getCldUserName(), customRestApiReqPo.getCldPassword());
+//        String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
+//        try {
+//            CrCloudJobStatus crCloudJobStatus = insertIntoCrCloudJobStatus(customRestApiReqPo, Status.COMPLETED.getStatus());
+//            log.info("TENANT-->" + customRestApiReqPo.getPodId());
+//            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
+//            PreparedStatement stmnt = con.prepareStatement("select distinct party_tax_profile_id,allow_offset_tax_flag,tax_registartion_type from "
+//                    + stagingTableName + " where CR_BATCH_NAME='" + customRestApiReqPo.getBatchName() + "'");
+//            ResultSet rs = stmnt.executeQuery();
+//            while (rs.next()) {
+//                // TaxRegistrations RestApi call
+//                CrSupplierTaxProfileErrors stpError = supplierTaxProfileUpdateApi(rs, headers, customRestApiReqPo.getBatchName(), customRestApiReqPo);
+//                if (stpError != null) {
+//                    errorsList.add(stpError);
+//                }
+//            }
+//            if (!errorsList.isEmpty()) {
+//                crSupplierTaxProfileErrorsRepository.saveAll(errorsList);
+//            }
+//        } finally {
+//            if (con != null)
+//                con.close();
+//        }
+//    }
 
     public void supplierTaxProfileUpdate(CustomRestApiReqPo customRestApiReqPo) throws Exception {
         log.info("Start of supplierTaxProfileUpdate in service ###");
         Connection con = null;
         List<CrSupplierTaxProfileErrors> errorsList = new ArrayList<>();
-        CrCloudTemplateHeadersView crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository.findById(customRestApiReqPo.getCldTemplateId()).get();
+
+        CrCloudTemplateHeadersView crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository
+                .findById(customRestApiReqPo.getCldTemplateId())
+                .orElseThrow(() -> new RuntimeException("Template not found"));
+
+        String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
+
+        //  Validate Table Name (Only Alphanumeric + Underscore)
+        if (!stagingTableName.matches("^[a-zA-Z0-9_]+$")) {
+            throw new SQLException("Invalid table name: " + stagingTableName);
+        }
+
         HttpHeaders headers = new HttpHeaders();
         headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBasicAuth(customRestApiReqPo.getCldUserName(), customRestApiReqPo.getCldPassword());
-        String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
+
         try {
             CrCloudJobStatus crCloudJobStatus = insertIntoCrCloudJobStatus(customRestApiReqPo, Status.COMPLETED.getStatus());
             log.info("TENANT-->" + customRestApiReqPo.getPodId());
-            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
-            PreparedStatement stmnt = con.prepareStatement("select distinct party_tax_profile_id,allow_offset_tax_flag,tax_registartion_type from "
-                    + stagingTableName + " where CR_BATCH_NAME='" + customRestApiReqPo.getBatchName() + "'");
+
+            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(
+                    String.valueOf(customRestApiReqPo.getPodId())
+            );
+
+            // Secure Prepared Statement
+            String query = "SELECT DISTINCT party_tax_profile_id, allow_offset_tax_flag, tax_registartion_type FROM " + stagingTableName + " WHERE CR_BATCH_NAME = ?";
+            PreparedStatement stmnt = con.prepareStatement(query);
+            stmnt.setString(1, customRestApiReqPo.getBatchName());
+
             ResultSet rs = stmnt.executeQuery();
             while (rs.next()) {
-                // TaxRegistrations RestApi call
+                // TaxRegistrations Rest API call
                 CrSupplierTaxProfileErrors stpError = supplierTaxProfileUpdateApi(rs, headers, customRestApiReqPo.getBatchName(), customRestApiReqPo);
                 if (stpError != null) {
                     errorsList.add(stpError);
                 }
             }
+
             if (!errorsList.isEmpty()) {
                 crSupplierTaxProfileErrorsRepository.saveAll(errorsList);
             }
         } finally {
-            if (con != null)
+            if (con != null) {
                 con.close();
+            }
         }
     }
+
 
     private CrSupplierTaxProfileErrors supplierTaxProfileUpdateApi(ResultSet rs, HttpHeaders headers
             , String batchName, CustomRestApiReqPo customRestApiReqPo) {
@@ -1093,34 +1193,159 @@ public class CrCldImportCustomRestApisServiceImpl {
         return stpError;
     }
 
+//    public void validateCcid(CustomRestApiReqPo customRestApiReqPo) throws Exception {
+//        log.info("Start of validateCcid method in service ##");
+//        AsyncProcessStatus processStatus = asyncProcessStatusRepository.save(initializeAsyncProcessStatus());
+//        log.info("Saved async process status to CR_ASYNC_PROCESS_STATUS table");
+//
+//        Connection con = null;
+//        long totalCount = 0;
+//        CrCloudTemplateHeadersView crCloudTemplateHeadersView;
+//
+//        ExecutorService executor = Executors.newFixedThreadPool(noOfThreads);
+//        List<Future<?>> futures = new ArrayList<>();
+//        AtomicBoolean errorOccurred = new AtomicBoolean(false);
+//
+//        try {
+//            //  CrCloudJobStatus crCloudJobStatus=insertIntoCrCloudJobStatus(customRestApiReqPo, Status.COMPLETED.getStatus());
+//            // Retrieve the template header view
+//            crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository
+//                    .findById(customRestApiReqPo.getCldTemplateId())
+//                    .orElseThrow(() -> new Exception("Template not found with ID: " + customRestApiReqPo.getCldTemplateId()));
+//
+//            log.info("TENANT --> " + customRestApiReqPo.getPodId());
+//
+//            // Establish a connection
+//            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
+//
+//            // Prepare and execute the query to get the total count
+//            String countQuery = "SELECT COUNT(DISTINCT " + customRestApiReqPo.getCcidColumnName() + ") FROM " + crCloudTemplateHeadersView.getStagingTableName()
+//                    + " WHERE CR_BATCH_NAME=?";
+//            try (PreparedStatement stmnt = con.prepareStatement(countQuery)) {
+//                stmnt.setString(1, customRestApiReqPo.getBatchName());
+//                try (ResultSet rs = stmnt.executeQuery()) {
+//                    if (rs.next()) {
+//                        totalCount = rs.getLong(1);
+//                    } else {
+//                        throw new Exception("Failed to retrieve the total count");
+//                    }
+//                }
+//            }
+//
+//            long loopCount = (long) Math.ceil((double) totalCount / batchSize);
+//            log.info("loopCount >>>>>> " + loopCount);
+//            log.info("totalCount >>>>> " + totalCount);
+//
+//            // Submit tasks for execution
+//            for (int i = 0; i < loopCount; i++) {
+//                if (errorOccurred.get()) {
+//                    log.error("Stopping further processing due to an error in one of the threads");
+//                    break;
+//                }
+//
+//                long offset = (i * batchSize) + 1;
+//                long limit = offset + batchSize - 1;
+//
+//                log.info("offset >>>> " + offset);
+//                log.info("limit >>>>>> " + limit);
+//
+//                Future<?> future = executor.submit(() -> {
+//                    try {
+//                        validateAndCreateClass.validateAndCreateAccounts(
+//                                crCloudTemplateHeadersView.getStagingTableName(),
+//                                offset,
+//                                limit,
+//                                customRestApiReqPo,
+//                                crCloudTemplateHeadersView,
+//                                processStatus
+//                        );
+//                    } catch (Exception e) {
+//                        log.error("Error in batch processing", e);
+//                        errorOccurred.set(true);
+//                        throw new RuntimeException(e);
+//                    }
+//                });
+//                futures.add(future);
+//            }
+//
+//            // Wait for all tasks to complete or handle errors
+//            for (Future<?> future : futures) {
+//                try {
+//                    future.get();
+//                } catch (Exception e) {
+//                    executor.shutdownNow();
+//                    throw new Exception(e.getMessage());
+//                }
+//            }
+//
+//
+//            // Update the CVR and async process status only if no error occurred
+//            if (!errorOccurred.get()) {
+//                processJobDaoImpl.cvrUpdate(
+//                        crCloudTemplateHeadersView.getStagingTableName(),
+//                        crCloudTemplateHeadersView.getSourceTemplateId(),
+//                        customRestApiReqPo.getBatchName(),
+//                        customRestApiReqPo.getLedgerColumnName(),
+//                        customRestApiReqPo.getCcidColumnName()
+//                );
+//                updateAsyncProcessStatus(processStatus.getAsyncProcessId(), "Completed");
+//            }
+//
+//        } catch (Exception ex) {
+//            // Ensure the async process status is updated even if an exception occurs
+//            updateAsyncProcessStatus(processStatus.getAsyncProcessId(), "Error", ex);
+//            log.error("Error in validateCcid", ex);
+//            throw new Exception(ex);
+//
+//        } finally {
+//            // Ensure the connection is closed and the executor is shutdown
+//            if (con != null) {
+//                try {
+//                    con.close();
+//                } catch (SQLException e) {
+//                    log.error("Error closing connection", e);
+//                }
+//            }
+//            executor.shutdown();
+//        }
+//    }
+
     public void validateCcid(CustomRestApiReqPo customRestApiReqPo) throws Exception {
         log.info("Start of validateCcid method in service ##");
         AsyncProcessStatus processStatus = asyncProcessStatusRepository.save(initializeAsyncProcessStatus());
         log.info("Saved async process status to CR_ASYNC_PROCESS_STATUS table");
 
-        Connection con = null;
         long totalCount = 0;
         CrCloudTemplateHeadersView crCloudTemplateHeadersView;
-
         ExecutorService executor = Executors.newFixedThreadPool(noOfThreads);
         List<Future<?>> futures = new ArrayList<>();
         AtomicBoolean errorOccurred = new AtomicBoolean(false);
 
-        try {
-            //  CrCloudJobStatus crCloudJobStatus=insertIntoCrCloudJobStatus(customRestApiReqPo, Status.COMPLETED.getStatus());
-            // Retrieve the template header view
-            crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository
-                    .findById(customRestApiReqPo.getCldTemplateId())
-                    .orElseThrow(() -> new Exception("Template not found with ID: " + customRestApiReqPo.getCldTemplateId()));
+        // Retrieve the template header view
+        crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository
+                .findById(customRestApiReqPo.getCldTemplateId())
+                .orElseThrow(() -> new Exception("Template not found with ID: " + customRestApiReqPo.getCldTemplateId()));
 
-            log.info("TENANT --> " + customRestApiReqPo.getPodId());
+        log.info("TENANT --> " + customRestApiReqPo.getPodId());
 
-            // Establish a connection
-            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
+        // Validate Table & Column Names (Prevent SQL Injection)
+        String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
+        String ccidColumnName = customRestApiReqPo.getCcidColumnName();
 
-            // Prepare and execute the query to get the total count
-            String countQuery = "SELECT COUNT(DISTINCT " + customRestApiReqPo.getCcidColumnName() + ") FROM " + crCloudTemplateHeadersView.getStagingTableName()
-                    + " WHERE CR_BATCH_NAME=?";
+        if (!stagingTableName.matches("^[a-zA-Z0-9_]+$")) {
+            throw new SQLException("Invalid table name: " + stagingTableName);
+        }
+        if (!ccidColumnName.matches("^[a-zA-Z0-9_]+$")) {
+            throw new SQLException("Invalid column name: " + ccidColumnName);
+        }
+
+        //Use try-with-resources to auto-close connection
+        try (Connection con = dynamicDataSourceBasedMultiTenantConnectionProvider
+                .getConnection(String.valueOf(customRestApiReqPo.getPodId()))) {
+
+            // Secure Query (Avoid Direct String Concatenation)
+            String countQuery = "SELECT COUNT(DISTINCT " + ccidColumnName + ") FROM " + stagingTableName + " WHERE CR_BATCH_NAME = ?";
+
             try (PreparedStatement stmnt = con.prepareStatement(countQuery)) {
                 stmnt.setString(1, customRestApiReqPo.getBatchName());
                 try (ResultSet rs = stmnt.executeQuery()) {
@@ -1152,7 +1377,7 @@ public class CrCldImportCustomRestApisServiceImpl {
                 Future<?> future = executor.submit(() -> {
                     try {
                         validateAndCreateClass.validateAndCreateAccounts(
-                                crCloudTemplateHeadersView.getStagingTableName(),
+                                stagingTableName,
                                 offset,
                                 limit,
                                 customRestApiReqPo,
@@ -1178,11 +1403,10 @@ public class CrCldImportCustomRestApisServiceImpl {
                 }
             }
 
-
             // Update the CVR and async process status only if no error occurred
             if (!errorOccurred.get()) {
                 processJobDaoImpl.cvrUpdate(
-                        crCloudTemplateHeadersView.getStagingTableName(),
+                        stagingTableName,
                         crCloudTemplateHeadersView.getSourceTemplateId(),
                         customRestApiReqPo.getBatchName(),
                         customRestApiReqPo.getLedgerColumnName(),
@@ -1198,17 +1422,10 @@ public class CrCldImportCustomRestApisServiceImpl {
             throw new Exception(ex);
 
         } finally {
-            // Ensure the connection is closed and the executor is shutdown
-            if (con != null) {
-                try {
-                    con.close();
-                } catch (SQLException e) {
-                    log.error("Error closing connection", e);
-                }
-            }
             executor.shutdown();
         }
     }
+
 
     private AsyncProcessStatus initializeAsyncProcessStatus() {
 
