@@ -11,6 +11,7 @@ import com.rite.products.convertrite.respository.CrValidateCvrCcidRepository;
 import com.rite.products.convertrite.respository.ProcessJobDaoImpl;
 import com.rite.products.convertrite.stubs.accountcombinationservice.AccountCombinationServiceStub;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.axis2.client.ServiceClient;
@@ -163,17 +164,26 @@ public class ValidateAndCreateClass {
         log.info("Start of validateAndCreateAccounts in service ###");
         updateAsyncProcessStatus(asyncProcessStatus.getAsyncProcessId(), "Processing");
 
-        // ✅ Validate Table Name (Prevent SQL Injection)
+        //  Validate Table Name (Prevent SQL Injection)
         if (!stagingTableName.matches("^[a-zA-Z0-9_]+$")) {
             throw new SQLException("Invalid table name: " + stagingTableName);
         }
+        // Define a list of allowed column names
+        List<String> allowedColumns = Arrays.asList("CCID_COLUMN", "LEDGER_COLUMN");
 
+// Validate column names before using them
+        String ccidColumn = customRestApiReqPo.getCcidColumnName();
+        String ledgerColumn = customRestApiReqPo.getLedgerColumnName();
+
+        if (!allowedColumns.contains(ccidColumn) || !allowedColumns.contains(ledgerColumn)) {
+            throw new SecurityException("Invalid column name detected");
+        }
+
+// Construct the SQL query safely after validation
         String query = "SELECT * FROM ("
-                + "SELECT DISTINCT " + customRestApiReqPo.getCcidColumnName() + ", "
-                + customRestApiReqPo.getLedgerColumnName() + ", ROWNUM rnum FROM ("
-                + "SELECT DISTINCT " + customRestApiReqPo.getCcidColumnName() + ", "
-                + customRestApiReqPo.getLedgerColumnName() + " FROM " + stagingTableName
-                + " WHERE CR_BATCH_NAME = ? ORDER BY " + customRestApiReqPo.getCcidColumnName()
+                + "SELECT DISTINCT " + ccidColumn + ", " + ledgerColumn + ", ROWNUM rnum FROM ("
+                + "SELECT DISTINCT " + ccidColumn + ", " + ledgerColumn + " FROM " + stagingTableName
+                + " WHERE CR_BATCH_NAME = ? ORDER BY " + ccidColumn
                 + ") WHERE ROWNUM <= ?"
                 + ") WHERE rnum >= ?";
 
@@ -222,7 +232,6 @@ public class ValidateAndCreateClass {
 
         return asyncProcessStatus;
     }
-
 
 
     private AccountCombinationServiceStub createStub(String cloudUrl, String username, String password) throws Exception {
