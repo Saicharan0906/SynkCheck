@@ -17,7 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
@@ -34,10 +35,10 @@ public class CrFbdiServiceImpl implements CrFbdiService {
 
     @Autowired
     CrFbdiHdrsRepo crFbdiHdrsRepo;
-    
+
     @Autowired
     CrFBDIViewRepo crFBDIViewRepo;
-    
+
     @Autowired
     CrFbdiColsRepo crFbdiColsRepo;
 
@@ -95,7 +96,7 @@ public class CrFbdiServiceImpl implements CrFbdiService {
 
     }
 
-     @Override
+    @Override
     public List<FbdiColumnSequencePo> getFbdiColumnSequence(String fileName, String version, HttpServletResponse resp)
             throws Exception {
         log.info("Start of getFbdiColumnSequence in service ###");
@@ -108,7 +109,7 @@ public class CrFbdiServiceImpl implements CrFbdiService {
             int sequence = 10;
             columnNames = ctlFileParser.getColumnNames();
             for (String columnName : columnNames) {
-                if(!columnName.equalsIgnoreCase("when") && !columnName.equalsIgnoreCase("else")){
+                if (!columnName.equalsIgnoreCase("when") && !columnName.equalsIgnoreCase("else")) {
                     FbdiColumnSequencePo fbdiColumnSequencePo = new FbdiColumnSequencePo();
                     fbdiColumnSequencePo.setDatabaseColumn(columnName);
                     fbdiColumnSequencePo.setSequence(sequence);
@@ -123,40 +124,76 @@ public class CrFbdiServiceImpl implements CrFbdiService {
         return columnSequencePo;
     }
 
+//    private Path downloadFbdiTemplateFromServer(String fileName, String version, HttpServletResponse resp)
+//            throws Exception {
+//        log.info("Start of downloadFbdiTemplateFromServer Method ###");
+//        String url = "";
+//        Path target = null;
+//        try {
+//            String sb = ctlUrlFirstPart + version +
+//                    ctlUrlSecondPart +
+//                    fileName;
+//            url = sb;
+//            resp.setHeader("API", url);
+//            // create Temp Directory
+//            target = Files.createTempDirectory("");
+//            log.info("target:::::" + target);
+//            // website url
+//            URL website = new URL(url);
+//            File file = new File(target + File.separator + fileName);
+//            try (InputStream in = website.openStream();
+//                 OutputStream outputStream = new FileOutputStream(file)) {
+//                IOUtils.copy(in, outputStream);
+//            } catch (IOException e) {
+//               // e.printStackTrace();
+//                throw new Exception(e.getMessage());
+//            }
+//        } catch (FileNotFoundException e) {
+//            // e.printStackTrace();
+//            throw new Exception(e.getMessage());
+//        } catch (Exception e) {
+//             //e.printStackTrace();
+//            throw new Exception(e.getMessage());
+//        }
+//        return target;
+//    }
+
     private Path downloadFbdiTemplateFromServer(String fileName, String version, HttpServletResponse resp)
             throws Exception {
         log.info("Start of downloadFbdiTemplateFromServer Method ###");
-        String url = "";
-        Path target = null;
-        try {
-            String sb = ctlUrlFirstPart + version +
-                    ctlUrlSecondPart +
-                    fileName;
-            url = sb;
-            resp.setHeader("API", url);
-            // create Temp Directory
-            target = Files.createTempDirectory("");
-            log.info("target:::::" + target);
-            // website url
-            URL website = new URL(url);
-            File file = new File(target + File.separator + fileName);
-            try (InputStream in = website.openStream();
-                 OutputStream outputStream = new FileOutputStream(file)) {
-                IOUtils.copy(in, outputStream);
-            } catch (IOException e) {
-               // e.printStackTrace();
-                throw new Exception(e.getMessage());
-            }
-        } catch (FileNotFoundException e) {
-            // e.printStackTrace();
-            throw new Exception(e.getMessage());
-        } catch (Exception e) {
-             //e.printStackTrace();
-            throw new Exception(e.getMessage());
+
+        //  Validate input parameters before using them in the URL
+        if (!isValidInput(fileName) || !isValidInput(version)) {
+            throw new IllegalArgumentException("Invalid fileName or version input");
+        }
+
+        String url = ctlUrlFirstPart + version + ctlUrlSecondPart + fileName;
+
+        // Encode URL to prevent HTTP header injection
+        String sanitizedUrl = URLEncoder.encode(url, StandardCharsets.UTF_8);
+
+        //  Set header safely without injection risk
+        resp.setHeader("API", sanitizedUrl);
+
+        // Create Temp Directory
+        Path target = Files.createTempDirectory("");
+        log.info("Target Directory: " + target);
+
+        // Download file safely
+        URL website = new URL(url);
+        File file = new File(target + File.separator + fileName);
+        try (InputStream in = website.openStream();
+             OutputStream outputStream = new FileOutputStream(file)) {
+            IOUtils.copy(in, outputStream);
+        } catch (IOException e) {
+            throw new Exception("File download failed: " + e.getMessage(), e);
         }
         return target;
     }
 
+    private boolean isValidInput(String input) {
+        return input != null && input.matches("^[a-zA-Z0-9_.-]+$");
+    }
 
     @Override
     public CrSaveFbdiTempColsResPo saveFbdiTemplateColumns(
@@ -209,12 +246,13 @@ public class CrFbdiServiceImpl implements CrFbdiService {
     }
 
     @Override
-    public List<CrFbdiHdrs>  getFbdiTemplates() throws Exception {
+    public List<CrFbdiHdrs> getFbdiTemplates() throws Exception {
         log.info("Start of getFbdiTemplates in Service ####");
         List<CrFbdiHdrs> crFbdiHdrs = new ArrayList<>();
         crFbdiHdrs = crFbdiHdrsRepo.findAll();
         return crFbdiHdrs;
     }
+
     @Override
     public List<CrFbdiCols> getFbdiTemplateColumns(Long fbdiTemplateId) throws Exception {
         log.info("Start of getFbdiTemplateColumns Method in Service ######");
@@ -266,10 +304,10 @@ public class CrFbdiServiceImpl implements CrFbdiService {
         return null;
     }
 
-	@Override
-	public List<CrFbdiView> getAllFbdITemplates() {
-		return crFBDIViewRepo.findAll();
-	}
+    @Override
+    public List<CrFbdiView> getAllFbdITemplates() {
+        return crFBDIViewRepo.findAll();
+    }
 }
 
 
