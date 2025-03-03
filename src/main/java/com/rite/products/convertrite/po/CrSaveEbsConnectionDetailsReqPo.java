@@ -20,4 +20,6 @@ public class CrSaveEbsConnectionDetailsReqPo {
 	private String userName;
 	@NotBlank(message="password cannot be blank")
 	private String password;
+	@NotBlank(message="connection type cannot be blank")
+	private String connectionType;
 }

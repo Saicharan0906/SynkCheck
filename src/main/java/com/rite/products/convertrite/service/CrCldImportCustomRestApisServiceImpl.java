@@ -91,7 +91,7 @@ public class CrCldImportCustomRestApisServiceImpl {
     @Autowired
     CrCloudJobStatusRepo crCloudJobStatusRepo;
 
-//    public void createBankAndBranches(CustomRestApiReqPo customRestApiReqPo) throws Exception {
+    //    public void createBankAndBranches(CustomRestApiReqPo customRestApiReqPo) throws Exception {
 //        log.info("Start of createBankAndBranches Method in service ###");
 //
 //        Connection con = null;
@@ -105,6 +105,7 @@ public class CrCldImportCustomRestApisServiceImpl {
 //        String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
 //
 //        try {
+//            CrCloudJobStatus crCloudJobStatus=insertIntoCrCloudJobStatus(customRestApiReqPo,Status.COMPLETED.getStatus());
 //            // create database connection
 //            log.info("TENANT-->" + customRestApiReqPo.getPodId());
 //            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
@@ -132,11 +133,9 @@ public class CrCldImportCustomRestApisServiceImpl {
 //                con.close();
 //        }
 //    }
-
     public void createBankAndBranches(CustomRestApiReqPo customRestApiReqPo) throws Exception {
         log.info("Start of createBankAndBranches Method in service ###");
 
-        Connection con = null;
         CrCloudTemplateHeadersView crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository
                 .findById(customRestApiReqPo.getCldTemplateId())
                 .orElseThrow(() -> new RuntimeException("Template not found for ID: " + customRestApiReqPo.getCldTemplateId()));
@@ -149,16 +148,19 @@ public class CrCldImportCustomRestApisServiceImpl {
         List<CrCreateBankBranchErrors> createBankBranchErrorsLi = new ArrayList<>();
         String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
 
-        // Validate table name to avoid SQL injection risk
+        // Validate table name to prevent SQL injection
         if (!isValidTableName(stagingTableName)) {
             throw new IllegalArgumentException("Invalid staging table name: " + stagingTableName);
         }
 
-        try {
-            log.info("TENANT-->" + customRestApiReqPo.getPodId());
-            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
+        CrCloudJobStatus crCloudJobStatus = insertIntoCrCloudJobStatus(customRestApiReqPo, Status.COMPLETED.getStatus());
 
-            // Query to fetch distinct banks
+        log.info("TENANT-->{}", customRestApiReqPo.getPodId());
+
+        // Try-with-resources to handle Connection, PreparedStatement, and ResultSet
+        try (Connection con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(
+                String.valueOf(customRestApiReqPo.getPodId()))) {
+
             String bankQuery = "SELECT DISTINCT bank_name, bank_number, attribute3 FROM " + stagingTableName +
                     " WHERE CR_BATCH_NAME = ? AND attribute1 = 'N'";
 
@@ -166,12 +168,12 @@ public class CrCldImportCustomRestApisServiceImpl {
                 stmnt.setString(1, customRestApiReqPo.getBatchName());
                 try (ResultSet rs = stmnt.executeQuery()) {
                     while (rs.next()) {
+                        // CreateBank RestApi call
                         createBank(rs, headers, createBankBranchErrorsLi, customRestApiReqPo);
                     }
                 }
             }
 
-            // Query to fetch distinct bank branches
             String branchQuery = "SELECT DISTINCT bank_number, bank_name, BRANCH_NAME, BRANCH_NUMBER, attribute3, attribute4 " +
                     "FROM " + stagingTableName +
                     " WHERE CR_BATCH_NAME = ? AND attribute1 IN ('N', 'BA')";
@@ -180,29 +182,22 @@ public class CrCldImportCustomRestApisServiceImpl {
                 stmntBr.setString(1, customRestApiReqPo.getBatchName());
                 try (ResultSet rsBr = stmntBr.executeQuery()) {
                     while (rsBr.next()) {
+                        // CreateBankBranch RestApi call
                         createBankBranch(rsBr, createBankBranchErrorsLi, customRestApiReqPo, headers);
                     }
                 }
             }
 
-            // Save errors if any
             if (!createBankBranchErrorsLi.isEmpty()) {
                 crCreateBankBranchErrorsRepository.saveAll(createBankBranchErrorsLi);
             }
-        } finally {
-            if (con != null) {
-                try {
-                    con.close();
-                } catch (SQLException e) {
-                    log.error("Error closing database connection", e);
-                }
-            }
+
+        } catch (Exception e) {
+            log.error("Error in createBankAndBranches()", e);
+            throw e; // Re-throwing exception for higher-level handling
         }
     }
 
-    /**
-     * Validates the table name to prevent SQL injection.
-     */
     private boolean isValidTableName(String tableName) {
         return tableName.matches("^[a-zA-Z0-9_]+$"); // Allows only alphanumeric and underscores
     }
@@ -268,73 +263,155 @@ public class CrCldImportCustomRestApisServiceImpl {
         }
     }
 
+    //    public void createOrUpdateBranch(CustomRestApiReqPo customRestApiReqPo) {
+//        log.info("Start of createOrUpdateBranch Method in service ###");
+//        Connection con = null;
+//        List<CrCreateBankBranchErrors> branchesErrorsLi = new ArrayList<>();
+//        AsyncProcessStatus asyncStatus = null;
+//        CrCloudJobStatus crCloudJobStatus = insertIntoCrCloudJobStatus(customRestApiReqPo, Status.IN_PROGRESS.getStatus());
+//        try {
+//            asyncStatus = asyncProcessStatusService.startProcess("CreateBranch", customRestApiReqPo.getCldTemplateId(), customRestApiReqPo.getBatchName(), "ConvertRite");
+//
+//            HttpHeaders headers = new HttpHeaders();
+//            headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
+//            headers.setContentType(MediaType.APPLICATION_JSON);
+//            headers.setBasicAuth(customRestApiReqPo.getCldUserName(), customRestApiReqPo.getCldPassword());
+//
+//            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
+//            CrCloudTemplateHeadersView crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository.findById(customRestApiReqPo.getCldTemplateId()).get();
+//
+//            String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
+//            PreparedStatement stmtA = con.prepareStatement("SELECT DISTINCT * FROM " + stagingTableName + " WHERE CR_BATCH_NAME = ?");
+//            stmtA.setString(1, customRestApiReqPo.getBatchName());
+//            ResultSet resultSetA = stmtA.executeQuery();
+//
+//            List<CrBranchesResPo> branchesList = getAllCashBranches(headers, customRestApiReqPo);
+//            log.info("branchesList-->" + branchesList.size());
+//
+//            Set<Long> branchPartyIds = new HashSet<>();
+//            for (CrBranchesResPo branch : branchesList) {
+//                branchPartyIds.add(branch.getBranchPartyId());
+//            }
+//            log.info("-branchPartyIds-->" + branchPartyIds.size());
+//
+//            List<CompletableFuture<CrCreateBankBranchErrors>> futures = new ArrayList<>();
+//
+//            while (resultSetA.next()) {
+//                Long branchPartyId = null;
+//                if (resultSetA.getString("BRANCH_PARTY_ID") != null) {
+//                    branchPartyId = Long.valueOf(resultSetA.getString("BRANCH_PARTY_ID"));
+//                }
+//                log.info(branchPartyIds.contains(branchPartyId) + "--branchPartyId-->" + branchPartyId);
+//
+//                if (branchPartyIds.contains(branchPartyId) && branchPartyId != null) {
+//                    futures.add(patchBranchAsync(resultSetA, customRestApiReqPo, headers, branchPartyId));
+//                } else {
+//                    futures.add(createBranchAsync(resultSetA, customRestApiReqPo, headers));
+//                }
+//            }
+//
+//            // Wait for all futures to complete and gather results
+//            CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+//
+//            // Block until all futures are done
+//            allOf.join();
+//            boolean hasError = false;
+//            boolean hasSuccess = false;
+//            // Now process the results
+//            for (CompletableFuture<CrCreateBankBranchErrors> future : futures) {
+//                CrCreateBankBranchErrors error = future.join();  // Get the result of each future
+//                if (error != null) {
+//                    branchesErrorsLi.add(error);
+//                    if (error.getStatus().equals(Status.ERROR.getStatus())) {
+//                        hasError = true;
+//                    } else if (error.getStatus().equals(Status.SUCCESS.getStatus())) {
+//                        hasSuccess = true;
+//                    }
+//                }
+//            }
+//            log.info("banksErrorsLi---------{}", branchesErrorsLi.size());
+//            updateAsyncProcessStatusAndCrCloudJobStatus(hasError, hasSuccess, asyncStatus, branchesErrorsLi.isEmpty(), customRestApiReqPo, crCloudJobStatus);
+//
+//            if (!branchesErrorsLi.isEmpty()) {
+//                crCreateBankBranchErrorsRepository.saveAll(branchesErrorsLi);
+//            }
+//
+//        } catch (Exception e) {
+//            // e.printStackTrace();
+//            log.error("Error in createOrUpdateBranch()--->" + e.getMessage());
+//            if (asyncStatus != null) {
+//                asyncProcessStatusService.endProcess(asyncStatus.getAsyncProcessId(), customRestApiReqPo.getCldTemplateId(), customRestApiReqPo.getBatchName(), Status.ERROR.getStatus(), e.getMessage(), "ConvertRite", crCloudJobStatus.getJobId());
+//            }
+//        }
+//    }
     public void createOrUpdateBranch(CustomRestApiReqPo customRestApiReqPo) {
         log.info("Start of createOrUpdateBranch Method in service ###");
-        Connection con = null;
+
         List<CrCreateBankBranchErrors> branchesErrorsLi = new ArrayList<>();
+        CrCloudJobStatus crCloudJobStatus = insertIntoCrCloudJobStatus(customRestApiReqPo, Status.IN_PROGRESS.getStatus());
         AsyncProcessStatus asyncStatus = null;
-        CrCloudJobStatus crCloudJobStatus = insertIntoCrCloudJobStatus(customRestApiReqPo);
-        try {
-            asyncStatus = asyncProcessStatusService.startProcess("CreateBranch", customRestApiReqPo.getCldTemplateId(), customRestApiReqPo.getBatchName(), "ConvertRite");
+
+        try (Connection con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(
+                String.valueOf(customRestApiReqPo.getPodId()))) {
+
+            asyncStatus = asyncProcessStatusService.startProcess(
+                    "CreateBranch", customRestApiReqPo.getCldTemplateId(), customRestApiReqPo.getBatchName(), "ConvertRite");
 
             HttpHeaders headers = new HttpHeaders();
             headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setBasicAuth(customRestApiReqPo.getCldUserName(), customRestApiReqPo.getCldPassword());
 
-            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
-            CrCloudTemplateHeadersView crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository.findById(customRestApiReqPo.getCldTemplateId()).get();
+            CrCloudTemplateHeadersView crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository
+                    .findById(customRestApiReqPo.getCldTemplateId())
+                    .orElseThrow(() -> new RuntimeException("Template not found for ID: " + customRestApiReqPo.getCldTemplateId()));
 
             String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
-            PreparedStatement stmtA = con.prepareStatement("SELECT DISTINCT * FROM " + stagingTableName + " WHERE CR_BATCH_NAME = ?");
-            stmtA.setString(1, customRestApiReqPo.getBatchName());
-            ResultSet resultSetA = stmtA.executeQuery();
 
-            List<CrBranchesResPo> branchesList = getAllCashBranches(headers, customRestApiReqPo);
-            log.info("branchesList-->" + branchesList.size());
-
-            Set<Long> branchPartyIds = new HashSet<>();
-            for (CrBranchesResPo branch : branchesList) {
-                branchPartyIds.add(branch.getBranchPartyId());
+            // Validate table name to prevent SQL injection
+            if (!isValidTableName(stagingTableName)) {
+                throw new IllegalArgumentException("Invalid staging table name: " + stagingTableName);
             }
-            log.info("-branchPartyIds-->" + branchPartyIds.size());
 
+            String query = "SELECT DISTINCT * FROM " + stagingTableName + " WHERE CR_BATCH_NAME = ?";
             List<CompletableFuture<CrCreateBankBranchErrors>> futures = new ArrayList<>();
 
-            while (resultSetA.next()) {
-                Long branchPartyId = null;
-                if (resultSetA.getString("BRANCH_PARTY_ID") != null) {
-                    branchPartyId = Long.valueOf(resultSetA.getString("BRANCH_PARTY_ID"));
-                }
-                log.info(branchPartyIds.contains(branchPartyId) + "--branchPartyId-->" + branchPartyId);
+            try (PreparedStatement stmtA = con.prepareStatement(query)) {
+                stmtA.setString(1, customRestApiReqPo.getBatchName());
 
-                if (branchPartyIds.contains(branchPartyId) && branchPartyId != null) {
-                    futures.add(patchBranchAsync(resultSetA, customRestApiReqPo, headers, branchPartyId));
-                } else {
-                    futures.add(createBranchAsync(resultSetA, customRestApiReqPo, headers));
-                }
-            }
+                try (ResultSet resultSetA = stmtA.executeQuery()) {
+                    List<CrBranchesResPo> branchesList = getAllCashBranches(headers, customRestApiReqPo);
+                    Set<Long> branchPartyIds = branchesList.stream()
+                            .map(CrBranchesResPo::getBranchPartyId)
+                            .collect(Collectors.toSet());
 
-            // Wait for all futures to complete and gather results
-            CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+                    log.info("Total branches found in API: {}", branchesList.size());
 
-            // Block until all futures are done
-            allOf.join();
-            boolean hasError = false;
-            boolean hasSuccess = false;
-            // Now process the results
-            for (CompletableFuture<CrCreateBankBranchErrors> future : futures) {
-                CrCreateBankBranchErrors error = future.join();  // Get the result of each future
-                if (error != null) {
-                    branchesErrorsLi.add(error);
-                    if (error.getStatus().equals(Status.ERROR.getStatus())) {
-                        hasError = true;
-                    } else if (error.getStatus().equals(Status.SUCCESS.getStatus())) {
-                        hasSuccess = true;
+                    while (resultSetA.next()) {
+                        Long branchPartyId = getBranchPartyId(resultSetA);
+
+                        log.info("Processing branchPartyId: {}", branchPartyId);
+                        if (branchPartyId != null && branchPartyIds.contains(branchPartyId)) {
+                            futures.add(patchBranchAsync(resultSetA, customRestApiReqPo, headers, branchPartyId));
+                        } else {
+                            futures.add(createBranchAsync(resultSetA, customRestApiReqPo, headers));
+                        }
                     }
                 }
             }
-            log.info("banksErrorsLi---------{}", branchesErrorsLi.size());
+
+            // Wait for all futures to complete
+            List<CrCreateBankBranchErrors> errors = futures.stream()
+                    .map(CompletableFuture::join)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            branchesErrorsLi.addAll(errors);
+
+            boolean hasError = errors.stream().anyMatch(e -> Status.ERROR.getStatus().equals(e.getStatus()));
+            boolean hasSuccess = errors.stream().anyMatch(e -> Status.SUCCESS.getStatus().equals(e.getStatus()));
+
+            log.info("Total branch processing errors: {}", branchesErrorsLi.size());
             updateAsyncProcessStatusAndCrCloudJobStatus(hasError, hasSuccess, asyncStatus, branchesErrorsLi.isEmpty(), customRestApiReqPo, crCloudJobStatus);
 
             if (!branchesErrorsLi.isEmpty()) {
@@ -342,13 +419,24 @@ public class CrCldImportCustomRestApisServiceImpl {
             }
 
         } catch (Exception e) {
-            // e.printStackTrace();
-            log.error("Error in createOrUpdateBranch()--->" + e.getMessage());
+            log.error("Error in createOrUpdateBranch", e);
             if (asyncStatus != null) {
-                asyncProcessStatusService.endProcess(asyncStatus.getAsyncProcessId(), customRestApiReqPo.getCldTemplateId(), customRestApiReqPo.getBatchName(), Status.ERROR.getStatus(), e.getMessage(), "ConvertRite", crCloudJobStatus.getJobId());
+                asyncProcessStatusService.endProcess(
+                        asyncStatus.getAsyncProcessId(), customRestApiReqPo.getCldTemplateId(),
+                        customRestApiReqPo.getBatchName(), Status.ERROR.getStatus(), e.getMessage(),
+                        "ConvertRite", crCloudJobStatus.getJobId());
             }
         }
     }
+
+    /**
+     * Extracts the branchPartyId from the ResultSet safely.
+     */
+    private Long getBranchPartyId(ResultSet resultSet) throws SQLException {
+        String branchIdStr = resultSet.getString("BRANCH_PARTY_ID");
+        return (branchIdStr != null) ? Long.valueOf(branchIdStr) : null;
+    }
+
 
     private void updateAsyncProcessStatusAndCrCloudJobStatus(boolean hasError, boolean hasSuccess, AsyncProcessStatus asyncStatus, boolean isErrorsListEmpty, CustomRestApiReqPo customRestApiReqPo, CrCloudJobStatus crCloudJobStatus) {
         if (hasError && hasSuccess && asyncStatus != null && !isErrorsListEmpty) {
@@ -401,74 +489,156 @@ public class CrCldImportCustomRestApisServiceImpl {
         return error;
     }
 
-    public void createOrUpdateBank(CustomRestApiReqPo customRestApiReqPo) throws Exception {
+    //    public void createOrUpdateBank(CustomRestApiReqPo customRestApiReqPo) throws Exception {
+//        log.info("Start of createOrUpdateBank Method in service ###");
+//        Connection con = null;
+//        List<CrCreateBankBranchErrors> banksErrorsLi = new ArrayList<>();
+//        AsyncProcessStatus asyncStatus = null;
+//        CrCloudJobStatus crCloudJobStatus = insertIntoCrCloudJobStatus(customRestApiReqPo, Status.IN_PROGRESS.getStatus());
+//        try {
+//            asyncStatus = asyncProcessStatusService.startProcess("CreateBank", customRestApiReqPo.getCldTemplateId(), customRestApiReqPo.getBatchName(), "ConvertRite");
+//
+//            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
+//            CrCloudTemplateHeadersView crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository.findById(customRestApiReqPo.getCldTemplateId()).get();
+//            HttpHeaders headers = new HttpHeaders();
+//            headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
+//            headers.setContentType(MediaType.APPLICATION_JSON);
+//            headers.setBasicAuth(customRestApiReqPo.getCldUserName(), customRestApiReqPo.getCldPassword());
+//
+//            String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
+//            PreparedStatement stmtA = con.prepareStatement("SELECT DISTINCT * FROM " + stagingTableName + " WHERE CR_BATCH_NAME = ?");
+//            stmtA.setString(1, customRestApiReqPo.getBatchName());
+//            ResultSet resultSetA = stmtA.executeQuery();
+//
+//            List<CrBanksResPo> banksList = getAllCashBanks(headers, customRestApiReqPo);
+//            log.info("banksList-->" + banksList.size());
+//
+//            Set<Long> bankPartyIds = new HashSet<>();
+//            for (CrBanksResPo account : banksList) {
+//                // log.info("-account.getBankPartyId()-->" +account.getBankPartyId());
+//                bankPartyIds.add(account.getBankPartyId());
+//            }
+//            log.info("-bankPartyIds-->" + bankPartyIds.size());
+//
+//            List<CompletableFuture<CrCreateBankBranchErrors>> futures = new ArrayList<>();
+//
+//            while (resultSetA.next()) {
+//                Long bankPartyId = null;
+//                if (resultSetA.getString("BANK_PARTY_ID") != null) {
+//                    bankPartyId = Long.valueOf(resultSetA.getString("BANK_PARTY_ID"));
+//                }
+//                log.info(bankPartyIds.contains(bankPartyId) + "--bankPartyId-->" + bankPartyId);
+//
+//                if (bankPartyIds.contains(bankPartyId) && bankPartyId != null) {
+//                    futures.add(patchBankAsync(resultSetA, customRestApiReqPo, headers, bankPartyId));
+//                } else {
+//                    futures.add(createBankAsync(resultSetA, customRestApiReqPo, headers));
+//                }
+//            }
+//
+//            // Wait for all futures to complete and gather results
+//            CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+//
+//            // Block until all futures are done
+//            allOf.join();
+//
+//            boolean hasError = false;
+//            boolean hasSuccess = false;
+//            // Now process the results
+//            for (CompletableFuture<CrCreateBankBranchErrors> future : futures) {
+//                CrCreateBankBranchErrors error = future.join();  // Get the result of each future
+//                if (error != null) {
+//                    banksErrorsLi.add(error);
+//                    if (error.getStatus().equals(Status.ERROR.getStatus())) {
+//                        hasError = true;
+//                    } else if (error.getStatus().equals(Status.SUCCESS.getStatus())) {
+//                        hasSuccess = true;
+//                    }
+//                }
+//            }
+//            log.info("banksErrorsLi---------{}", banksErrorsLi.size());
+//            updateAsyncProcessStatusAndCrCloudJobStatus(hasError, hasSuccess, asyncStatus, banksErrorsLi.isEmpty(), customRestApiReqPo, crCloudJobStatus);
+//
+//            if (!banksErrorsLi.isEmpty()) {
+//                crCreateBankBranchErrorsRepository.saveAll(banksErrorsLi);
+//            }
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            log.error("Error in createBank()--->" + e.getMessage());
+//            if (asyncStatus != null) {
+//                asyncProcessStatusService.endProcess(asyncStatus.getAsyncProcessId(), customRestApiReqPo.getCldTemplateId(), customRestApiReqPo.getBatchName(), Status.ERROR.getStatus(), e.getMessage(), "ConvertRite", crCloudJobStatus.getJobId());
+//            }
+//        }
+//    }
+    public void createOrUpdateBank(CustomRestApiReqPo customRestApiReqPo) {
         log.info("Start of createOrUpdateBank Method in service ###");
-        Connection con = null;
-        List<CrCreateBankBranchErrors> banksErrorsLi = new ArrayList<>();
-        AsyncProcessStatus asyncStatus = null;
-        CrCloudJobStatus crCloudJobStatus = insertIntoCrCloudJobStatus(customRestApiReqPo);
-        try {
-            asyncStatus = asyncProcessStatusService.startProcess("CreateBank", customRestApiReqPo.getCldTemplateId(), customRestApiReqPo.getBatchName(), "ConvertRite");
 
-            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
-            CrCloudTemplateHeadersView crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository.findById(customRestApiReqPo.getCldTemplateId()).get();
+        List<CrCreateBankBranchErrors> banksErrorsLi = new ArrayList<>();
+        CrCloudJobStatus crCloudJobStatus = insertIntoCrCloudJobStatus(customRestApiReqPo, Status.IN_PROGRESS.getStatus());
+        AsyncProcessStatus asyncStatus = null;
+
+        try (Connection con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(
+                String.valueOf(customRestApiReqPo.getPodId()))) {
+
+            asyncStatus = asyncProcessStatusService.startProcess(
+                    "CreateBank", customRestApiReqPo.getCldTemplateId(), customRestApiReqPo.getBatchName(), "ConvertRite");
+
             HttpHeaders headers = new HttpHeaders();
             headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setBasicAuth(customRestApiReqPo.getCldUserName(), customRestApiReqPo.getCldPassword());
 
+            CrCloudTemplateHeadersView crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository
+                    .findById(customRestApiReqPo.getCldTemplateId())
+                    .orElseThrow(() -> new RuntimeException("Template not found for ID: " + customRestApiReqPo.getCldTemplateId()));
+
             String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
-            PreparedStatement stmtA = con.prepareStatement("SELECT DISTINCT * FROM " + stagingTableName + " WHERE CR_BATCH_NAME = ?");
-            stmtA.setString(1, customRestApiReqPo.getBatchName());
-            ResultSet resultSetA = stmtA.executeQuery();
 
-            List<CrBanksResPo> banksList = getAllCashBanks(headers, customRestApiReqPo);
-            log.info("banksList-->" + banksList.size());
-
-            Set<Long> bankPartyIds = new HashSet<>();
-            for (CrBanksResPo account : banksList) {
-                // log.info("-account.getBankPartyId()-->" +account.getBankPartyId());
-                bankPartyIds.add(account.getBankPartyId());
+            // Validate table name to prevent SQL injection
+            if (!isValidTableName(stagingTableName)) {
+                throw new IllegalArgumentException("Invalid staging table name: " + stagingTableName);
             }
-            log.info("-bankPartyIds-->" + bankPartyIds.size());
 
+            String query = "SELECT DISTINCT * FROM " + stagingTableName + " WHERE CR_BATCH_NAME = ?";
             List<CompletableFuture<CrCreateBankBranchErrors>> futures = new ArrayList<>();
 
-            while (resultSetA.next()) {
-                Long bankPartyId = null;
-                if (resultSetA.getString("BANK_PARTY_ID") != null) {
-                    bankPartyId = Long.valueOf(resultSetA.getString("BANK_PARTY_ID"));
-                }
-                log.info(bankPartyIds.contains(bankPartyId) + "--bankPartyId-->" + bankPartyId);
+            try (PreparedStatement stmtA = con.prepareStatement(query)) {
+                stmtA.setString(1, customRestApiReqPo.getBatchName());
 
-                if (bankPartyIds.contains(bankPartyId) && bankPartyId != null) {
-                    futures.add(patchBankAsync(resultSetA, customRestApiReqPo, headers, bankPartyId));
-                } else {
-                    futures.add(createBankAsync(resultSetA, customRestApiReqPo, headers));
-                }
-            }
+                try (ResultSet resultSetA = stmtA.executeQuery()) {
+                    List<CrBanksResPo> banksList = getAllCashBanks(headers, customRestApiReqPo);
+                    Set<Long> bankPartyIds = banksList.stream()
+                            .map(CrBanksResPo::getBankPartyId)
+                            .collect(Collectors.toSet());
 
-            // Wait for all futures to complete and gather results
-            CompletableFuture<Void> allOf = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+                    log.info("Total banks found in API: {}", banksList.size());
 
-            // Block until all futures are done
-            allOf.join();
+                    while (resultSetA.next()) {
+                        Long bankPartyId = getBankPartyId(resultSetA);
 
-            boolean hasError = false;
-            boolean hasSuccess = false;
-            // Now process the results
-            for (CompletableFuture<CrCreateBankBranchErrors> future : futures) {
-                CrCreateBankBranchErrors error = future.join();  // Get the result of each future
-                if (error != null) {
-                    banksErrorsLi.add(error);
-                    if (error.getStatus().equals(Status.ERROR.getStatus())) {
-                        hasError = true;
-                    } else if (error.getStatus().equals(Status.SUCCESS.getStatus())) {
-                        hasSuccess = true;
+                        log.info("Processing bankPartyId: {}", bankPartyId);
+                        if (bankPartyId != null && bankPartyIds.contains(bankPartyId)) {
+                            futures.add(patchBankAsync(resultSetA, customRestApiReqPo, headers, bankPartyId));
+                        } else {
+                            futures.add(createBankAsync(resultSetA, customRestApiReqPo, headers));
+                        }
                     }
                 }
             }
-            log.info("banksErrorsLi---------{}", banksErrorsLi.size());
+
+            // Wait for all futures to complete
+            List<CrCreateBankBranchErrors> errors = futures.stream()
+                    .map(CompletableFuture::join)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            banksErrorsLi.addAll(errors);
+
+            boolean hasError = errors.stream().anyMatch(e -> Status.ERROR.getStatus().equals(e.getStatus()));
+            boolean hasSuccess = errors.stream().anyMatch(e -> Status.SUCCESS.getStatus().equals(e.getStatus()));
+
+            log.info("Total bank processing errors: {}", banksErrorsLi.size());
             updateAsyncProcessStatusAndCrCloudJobStatus(hasError, hasSuccess, asyncStatus, banksErrorsLi.isEmpty(), customRestApiReqPo, crCloudJobStatus);
 
             if (!banksErrorsLi.isEmpty()) {
@@ -476,17 +646,27 @@ public class CrCldImportCustomRestApisServiceImpl {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
-            log.error("Error in createBank()--->" + e.getMessage());
+            log.error("Error in createOrUpdateBank", e);
             if (asyncStatus != null) {
-                asyncProcessStatusService.endProcess(asyncStatus.getAsyncProcessId(), customRestApiReqPo.getCldTemplateId(), customRestApiReqPo.getBatchName(), Status.ERROR.getStatus(), e.getMessage(), "ConvertRite", crCloudJobStatus.getJobId());
+                asyncProcessStatusService.endProcess(
+                        asyncStatus.getAsyncProcessId(), customRestApiReqPo.getCldTemplateId(),
+                        customRestApiReqPo.getBatchName(), Status.ERROR.getStatus(), e.getMessage(),
+                        "ConvertRite", crCloudJobStatus.getJobId());
             }
         }
     }
 
-    private CrCloudJobStatus insertIntoCrCloudJobStatus(CustomRestApiReqPo customRestApiReqPo) {
+    /**
+     * Extracts the bankPartyId from the ResultSet safely.
+     */
+    private Long getBankPartyId(ResultSet resultSet) throws SQLException {
+        String bankIdStr = resultSet.getString("BANK_PARTY_ID");
+        return (bankIdStr != null) ? Long.valueOf(bankIdStr) : null;
+    }
+
+    private CrCloudJobStatus insertIntoCrCloudJobStatus(CustomRestApiReqPo customRestApiReqPo, String status) {
         CrCloudJobStatus crCloudJobStatus = new CrCloudJobStatus();
-        crCloudJobStatus.setJobStatus("InProgress");
+        crCloudJobStatus.setJobStatus(status);
         crCloudJobStatus.setCldTemplateId(customRestApiReqPo.getCldTemplateId());
         crCloudJobStatus.setBatchName(customRestApiReqPo.getBatchName());
         crCloudJobStatus.setObjectCode(customRestApiReqPo.getObjectName());
@@ -531,7 +711,7 @@ public class CrCldImportCustomRestApisServiceImpl {
                 error = insertErrorOrSuccessRecordsOfBanks(customRestApiReqPo, rs, null, Status.SUCCESS.getStatus(), "PATCH");
             }
         } catch (Exception e) {
-            log.error("Error while calling Create Bank Post API ----> " + e.getMessage());
+            log.error("Error while calling Create Bank PATCH API ----> " + e.getMessage());
             error = insertErrorOrSuccessRecordsOfBanks(customRestApiReqPo, rs, e.getMessage(), Status.ERROR.getStatus(), "PATCH");
         }
         return error;
@@ -741,6 +921,7 @@ public class CrCldImportCustomRestApisServiceImpl {
                 .findById(customRestApiReqPo.getCldTemplateId()).get();
         String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
         try {
+            CrCloudJobStatus crCloudJobStatus = insertIntoCrCloudJobStatus(customRestApiReqPo, Status.COMPLETED.getStatus());
             log.info("TENANT-->" + customRestApiReqPo.getPodId());
             con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
             PreparedStatement stmnt = con.prepareStatement("select * from " + stagingTableName
@@ -807,6 +988,7 @@ public class CrCldImportCustomRestApisServiceImpl {
         headers.setBasicAuth(customRestApiReqPo.getCldUserName(), customRestApiReqPo.getCldPassword());
         String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
         try {
+            CrCloudJobStatus crCloudJobStatus = insertIntoCrCloudJobStatus(customRestApiReqPo, Status.COMPLETED.getStatus());
             log.info("TENANT-->" + customRestApiReqPo.getPodId());
             con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
             PreparedStatement stmnt = con.prepareStatement("select distinct party_tax_profile_id,allow_offset_tax_flag,tax_registartion_type from "
@@ -879,6 +1061,7 @@ public class CrCldImportCustomRestApisServiceImpl {
         AtomicBoolean errorOccurred = new AtomicBoolean(false);
 
         try {
+            //  CrCloudJobStatus crCloudJobStatus=insertIntoCrCloudJobStatus(customRestApiReqPo, Status.COMPLETED.getStatus());
             // Retrieve the template header view
             crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository
                     .findById(customRestApiReqPo.getCldTemplateId())
@@ -1121,7 +1304,7 @@ public class CrCldImportCustomRestApisServiceImpl {
         Connection con = null;
         List<CrBankAccountErrors> bankAccountErrorsLi = new ArrayList<>();
         AsyncProcessStatus asyncStatus = null;
-        CrCloudJobStatus crCloudJobStatus = insertIntoCrCloudJobStatus(customRestApiReqPo);
+        CrCloudJobStatus crCloudJobStatus = insertIntoCrCloudJobStatus(customRestApiReqPo, Status.IN_PROGRESS.getStatus());
         try {
             asyncStatus = asyncProcessStatusService.startProcess("BankAccounts", customRestApiReqPo.getCldTemplateId(), customRestApiReqPo.getBatchName(), "ConvertRite");
 
@@ -1526,11 +1709,6 @@ public class CrCldImportCustomRestApisServiceImpl {
 //        }
 //    }
     public void updateCldStagingTable(String updateType, CustomRestApiReqPo customRestApiReqPo) throws SQLException {
-        Connection con = null;
-        PreparedStatement selectStmnt = null;
-        PreparedStatement updateStmnt = null;
-        ResultSet rs = null;
-
         try {
             log.info("==============updateCldStagingTable=================" + customRestApiReqPo);
             HttpHeaders headers = new HttpHeaders();
@@ -1539,80 +1717,115 @@ public class CrCldImportCustomRestApisServiceImpl {
             headers.setBasicAuth(customRestApiReqPo.getCldUserName(), customRestApiReqPo.getCldPassword());
 
             log.info("TENANT-->" + customRestApiReqPo.getPodId());
-
             CrCloudTemplateHeadersView crCloudTemplateHeadersView = cloudTemplateHeadersViewRepository
-                    .findById(customRestApiReqPo.getCldTemplateId()).orElseThrow(() -> new IllegalArgumentException("Invalid template ID"));
-
+                    .findById(customRestApiReqPo.getCldTemplateId()).get();
             String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
+            Connection con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(String.valueOf(customRestApiReqPo.getPodId()));
 
-            //Validate table name
-            Set<String> allowedTables = Set.of("CR_C_CR_JOURNAL_IMPORT_STG", "OTHER_ALLOWED_TABLE");
-            if (!allowedTables.contains(stagingTableName)) {
-                throw new IllegalArgumentException("Invalid table name: " + stagingTableName);
-            }
+            String selectQuery = "SELECT * FROM " + stagingTableName + " WHERE cr_batch_name = ?";
+            PreparedStatement stmnt = con.prepareStatement(selectQuery);
+            stmnt.setString(1, customRestApiReqPo.getBatchName());
+            ResultSet rs = stmnt.executeQuery();
 
-            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(
-                    String.valueOf(customRestApiReqPo.getPodId()));
+            if (updateType.equalsIgnoreCase("branches")) {
+                List<CrBranchesResPo> branchesList = getAllCashBranches(headers, customRestApiReqPo);
+                log.info("branchesList--->" + branchesList.size());
 
-            String query = "SELECT BRANCH_NAME, BRANCH_NUMBER, COUNTRY_NAME FROM " + stagingTableName + " WHERE cr_batch_name = ?";
-            selectStmnt = con.prepareStatement(query);
-            selectStmnt.setString(1, customRestApiReqPo.getBatchName());
-            rs = selectStmnt.executeQuery();
+                String updateQuery = "UPDATE " + stagingTableName + " SET BRANCH_PARTY_ID = ? WHERE BRANCH_NUMBER = ? AND BRANCH_NAME = ? AND cr_batch_name = ?";
+                PreparedStatement updateStmnt = con.prepareStatement(updateQuery);
 
-            List<CrBranchesResPo> branchesList = getAllCashBranches(headers, customRestApiReqPo);
-            log.info("branchesList size: " + branchesList.size());
+                while (rs.next()) {
+                    String rsBranchName = rs.getString("BRANCH_NAME");
+                    String rsBranchNumber = rs.getString("BRANCH_NUMBER");
+                    String rsCountry = rs.getString("COUNTRY_NAME");
 
-            //  Batch Update to Improve Performance
-            String updateQuery = "UPDATE " + stagingTableName + " SET BRANCH_PARTY_ID = ? WHERE BRANCH_NUMBER = ? AND BRANCH_NAME = ? AND cr_batch_name = ?";
-            updateStmnt = con.prepareStatement(updateQuery);
+                    for (CrBranchesResPo branch : branchesList) {
+                        if (rsCountry != null && rsBranchName != null && branch.getBankBranchName() != null &&
+                                branch.getBankBranchName().trim().equalsIgnoreCase(rsBranchName.trim()) &&
+                                rsBranchNumber != null && branch.getBranchNumber() != null &&
+                                branch.getBranchNumber().equals(rsBranchNumber) &&
+                                branch.getCountryName().trim().equalsIgnoreCase(rsCountry.trim())) {
 
-            while (rs.next()) {
-                String rsBranchName = rs.getString("BRANCH_NAME");
-                String rsBranchNumber = rs.getString("BRANCH_NUMBER");
-                String rsCountry = rs.getString("COUNTRY_NAME");
+                            updateStmnt.setLong(1, branch.getBranchPartyId());
+                            updateStmnt.setString(2, rsBranchNumber);
+                            updateStmnt.setString(3, rsBranchName);
+                            updateStmnt.setString(4, customRestApiReqPo.getBatchName());
 
-                for (CrBranchesResPo branch : branchesList) {
-                    if (branch.getBankBranchName().trim().equalsIgnoreCase(rsBranchName.trim()) &&
-                            branch.getBranchNumber().equals(rsBranchNumber) &&
-                            branch.getCountryName().trim().equalsIgnoreCase(rsCountry.trim())) {
-
-                        log.info("Updating BRANCH_PARTY_ID for Branch: " + rsBranchName);
-
-                        updateStmnt.setLong(1, branch.getBranchPartyId());
-                        updateStmnt.setString(2, rsBranchNumber);
-                        updateStmnt.setString(3, rsBranchName);
-                        updateStmnt.setString(4, customRestApiReqPo.getBatchName());
-
-                        updateStmnt.addBatch();
+                            log.info("Executing update: " + updateStmnt);
+                            updateStmnt.executeUpdate();
+                        }
                     }
                 }
-            }
-
-            //Execute batch update
-            int[] updateCounts = updateStmnt.executeBatch();
-            log.info("Updated rows: " + Arrays.stream(updateCounts).sum());
-
-        } catch (Exception e) {
-            log.error("Exception in updateCldStagingTable: " + e.getMessage(), e);
-            throw new SQLException("Error updating staging table", e);
-        } finally {
-            // Proper resource cleanup
-            if (rs != null) try {
-                rs.close();
-            } catch (Exception ignored) {
-            }
-            if (selectStmnt != null) try {
-                selectStmnt.close();
-            } catch (Exception ignored) {
-            }
-            if (updateStmnt != null) try {
                 updateStmnt.close();
-            } catch (Exception ignored) {
             }
-            if (con != null) try {
-                con.close();
-            } catch (Exception ignored) {
+
+            if (updateType.equalsIgnoreCase("banks")) {
+                List<CrBanksResPo> banksList = getAllCashBanks(headers, customRestApiReqPo);
+                log.info("banksList--->" + banksList.size());
+
+                String updateQuery = "UPDATE " + stagingTableName + " SET BANK_PARTY_ID = ? WHERE BANK_NUMBER = ? AND BANK_NAME = ? AND cr_batch_name = ?";
+                PreparedStatement updateStmnt = con.prepareStatement(updateQuery);
+
+                while (rs.next()) {
+                    String rsBankName = rs.getString("BANK_NAME");
+                    String rsBankNumber = rs.getString("BANK_NUMBER");
+                    String rsCountry = rs.getString("COUNTRY_NAME");
+
+                    for (CrBanksResPo bank : banksList) {
+                        if (rsCountry != null && rsBankName != null && bank.getBankName() != null && bank.getBankName().equals(rsBankName) &&
+                                rsBankNumber != null && bank.getBankNumber() != null && bank.getBankNumber().equals(rsBankNumber) &&
+                                bank.getCountryName().equals(rsCountry)) {
+
+                            updateStmnt.setLong(1, bank.getBankPartyId());
+                            updateStmnt.setString(2, rsBankNumber);
+                            updateStmnt.setString(3, rsBankName);
+                            updateStmnt.setString(4, customRestApiReqPo.getBatchName());
+
+                            log.info("Executing update: " + updateStmnt);
+                            updateStmnt.executeUpdate();
+                        }
+                    }
+                }
+                updateStmnt.close();
             }
+
+            if (updateType.equalsIgnoreCase("accounts")) {
+                List<CrBankAccountResPo> accountsList = getAllCashBankAccounts(headers, customRestApiReqPo);
+                log.info("accountsList--->" + accountsList.size());
+
+                String updateQuery = "UPDATE " + stagingTableName + " SET BANK_ACCOUNT_ID = ? WHERE BANK_NUMBER = ? AND BRANCH_NUMBER = ? AND cr_batch_name = ?";
+                PreparedStatement updateStmnt = con.prepareStatement(updateQuery);
+
+                while (rs.next()) {
+                    String rsBankNumber = rs.getString("BANK_NUMBER");
+                    String rsBranchNumber = rs.getString("BRANCH_NUMBER");
+                    String rsAccountNumber = rs.getString("BANK_ACCOUNT_NUMBER");
+
+                    for (CrBankAccountResPo bankAccount : accountsList) {
+                        if (rsBankNumber != null && rsBranchNumber != null && rsAccountNumber != null &&
+                                bankAccount.getBranchNumber() != null && bankAccount.getBankAccountNumber() != null) {
+
+                            if (bankAccount.getBranchNumber().equals(rsBranchNumber) && bankAccount.getBankAccountNumber().equals(rsAccountNumber)) {
+
+                                updateStmnt.setLong(1, bankAccount.getBankAccountId());
+                                updateStmnt.setString(2, rsBankNumber);
+                                updateStmnt.setString(3, rsBranchNumber);
+                                updateStmnt.setString(4, customRestApiReqPo.getBatchName());
+
+                                log.info("Executing update: " + updateStmnt);
+                                updateStmnt.executeUpdate();
+                            }
+                        }
+                    }
+                }
+                updateStmnt.close();
+            }
+
+            rs.close();
+            stmnt.close();
+            con.close();
+        } catch (Exception e) {
+            log.error("Exception in updateCldStagingTable-->", e);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.rite.products.convertrite.service;
 
+import com.rite.products.convertrite.utils.DataSourceUtil;
 import java.sql.*;
 import java.util.Date;
 import java.util.List;
@@ -46,6 +47,8 @@ public class CrEbsConnectionServiceImpl {
     CrSourceTemplateHeadersViewRepo crSourceTemplateHeadersViewRepo;
     @Autowired
     GenerateOrigTransRefDaoImpl generateOrigTransRefDaoImpl;
+    @Autowired
+    DataSourceUtil dataSourceUtil;
 
     @Autowired
     @Qualifier("masterDataSource")
@@ -53,6 +56,7 @@ public class CrEbsConnectionServiceImpl {
 
     @Autowired
     CrSourceTableRepo crSourceTableRepo;
+
 
     @Autowired
     CrBatchWiseProcessingDaoImpl batchWiseProcessingDaoImpl;
@@ -65,6 +69,9 @@ public class CrEbsConnectionServiceImpl {
 
     @Value("${ebs.dblink.enabled:false}")
     private boolean dbLinkEnabled;
+    @Autowired
+    CrSqlextractionBindVarDtlsRepository sqlextractionBindVarDtlsRepository;
+
 
     /**
      * @param ebsConnectnDtlsReqPo
@@ -112,15 +119,27 @@ public class CrEbsConnectionServiceImpl {
     private CrEbsConnectionDetails saveConnectionDtls(CrSaveEbsConnectionDetailsReqPo ebsConnectnDtlsReqPo, Connection con) throws ValidationException, Exception {
         CrEbsConnectionDetails ebsConnectionDetails = new CrEbsConnectionDetails();
         Long connectionId = ebsConnectnDtlsReqPo.getConnectionId();
+        Connection ebsCon = null;
         try {
-            String ebsConnectionUrl = "jdbc:oracle:thin:@//" + ebsConnectnDtlsReqPo.getHostName() + ":" + ebsConnectnDtlsReqPo.getPort() + "/" + ebsConnectnDtlsReqPo.getServiceName();
-            // Driver name
-            Class.forName(
-                    "oracle.jdbc.driver.OracleDriver");
-            Connection ebsCon = DriverManager.getConnection(
-                    ebsConnectionUrl, ebsConnectnDtlsReqPo.getUserName(), ebsConnectnDtlsReqPo.getPassword());
+            if ("Azure".equalsIgnoreCase(ebsConnectnDtlsReqPo.getConnectionType())) {
+                EbsConnectionReqPo ebsConnectionReqPo = new EbsConnectionReqPo();
+                ebsConnectionReqPo.setDatabaseName(ebsConnectnDtlsReqPo.getServiceName());
+                ebsConnectionReqPo.setPortNumber(ebsConnectnDtlsReqPo.getPort());
+                ebsConnectionReqPo.setHostName(ebsConnectnDtlsReqPo.getHostName());
+                ebsConnectionReqPo.setTargetUserName(ebsConnectnDtlsReqPo.getUserName());
+                ebsConnectionReqPo.setTargetPassword(ebsConnectnDtlsReqPo.getPassword());
+                ebsCon = dataSourceUtil.createMsSQLConnection(ebsConnectionReqPo);
+
+            } else {
+                String ebsConnectionUrl = "jdbc:oracle:thin:@//" + ebsConnectnDtlsReqPo.getHostName() + ":" + ebsConnectnDtlsReqPo.getPort() + "/" + ebsConnectnDtlsReqPo.getServiceName();
+                // Driver name
+                Class.forName(
+                        "oracle.jdbc.driver.OracleDriver");
+                ebsCon = DriverManager.getConnection(
+                        ebsConnectionUrl, ebsConnectnDtlsReqPo.getUserName(), ebsConnectnDtlsReqPo.getPassword());
+            }
         } catch (Exception e) {
-            log.error("Error getting EBS connection: "+e.getMessage());
+            log.error("Error getting EBS connection: " + e.getMessage());
             throw new ValidationException("Please cross verify ebs connection details");
         }
         if (connectionId != null) {
@@ -146,6 +165,7 @@ public class CrEbsConnectionServiceImpl {
         ebsConnectionDetails.setCreatedBy("ConvertRite");
         ebsConnectionDetails.setLastUpdatedDate(new Date());
         ebsConnectionDetails.setLastUpdateBy("ConvertRite");
+        ebsConnectionDetails.setConnectionType(ebsConnectnDtlsReqPo.getConnectionType());
         return crEbsConnectionDetailsRepository.save(ebsConnectionDetails);
     }
 
@@ -157,7 +177,7 @@ public class CrEbsConnectionServiceImpl {
         sb.append(" USING '(DESCRIPTION=\r\n" + " (ADDRESS=(PROTOCOL=TCP)(HOST=" + ebsConnectnDtlsResp.getHostName()
                 + ")(PORT=" + ebsConnectnDtlsResp.getPort() + "))");
         sb.append("(CONNECT_DATA=(SERVICE_NAME=" + ebsConnectnDtlsResp.getServiceName() + ")))'");
-        log.info("DBLinkQuery:"+sb.toString());
+        log.info("DBLinkQuery:" + sb.toString());
         return sb.toString();
     }
 
@@ -168,21 +188,26 @@ public class CrEbsConnectionServiceImpl {
         return responsePo;
     }
 
-    public Connection getEbsConnection(String connectionName) throws ValidationException{
+    public Connection getEbsConnection(String connectionName, CrEbsConnectionDetails ebsDtlsWithConnectnName) throws ValidationException {
         Connection ebsCon = null;
         try {
             log.info("======getEbsConnection======");
-            CrEbsConnectionDetails ebsDtlsWithConnectnName = crEbsConnectionDetailsRepository
-                    .findByConnectionName(connectionName);
-            if (ebsDtlsWithConnectnName == null) {
-                throw new ValidationException("EBS connection doesn't exist");
+            if ("azure".equalsIgnoreCase(ebsDtlsWithConnectnName.getConnectionType())) {
+                EbsConnectionReqPo ebsConnectionReqPo = new EbsConnectionReqPo();
+                ebsConnectionReqPo.setDatabaseName(ebsDtlsWithConnectnName.getServiceName());
+                ebsConnectionReqPo.setPortNumber(ebsDtlsWithConnectnName.getPort());
+                ebsConnectionReqPo.setHostName(ebsDtlsWithConnectnName.getHostName());
+                ebsConnectionReqPo.setTargetUserName(ebsDtlsWithConnectnName.getUserName());
+                ebsConnectionReqPo.setTargetPassword(ebsDtlsWithConnectnName.getPassword());
+                ebsCon = dataSourceUtil.createMsSQLConnection(ebsConnectionReqPo);
+            } else {
+                String ebsConnectionUrl = "jdbc:oracle:thin:@//" + ebsDtlsWithConnectnName.getHostName() + ":" + ebsDtlsWithConnectnName.getPort() + "/" + ebsDtlsWithConnectnName.getServiceName();
+                log.info("ebsConnectionUrl----> {} ", ebsConnectionUrl);
+                // Driver name
+                Class.forName("oracle.jdbc.driver.OracleDriver");
+                ebsCon = DriverManager.getConnection(
+                        ebsConnectionUrl, ebsDtlsWithConnectnName.getUserName(), ebsDtlsWithConnectnName.getPassword());
             }
-            String ebsConnectionUrl = "jdbc:oracle:thin:@//" + ebsDtlsWithConnectnName.getHostName() + ":" + ebsDtlsWithConnectnName.getPort() + "/" + ebsDtlsWithConnectnName.getServiceName();
-            log.info("ebsConnectionUrl----> {} ", ebsConnectionUrl);
-            // Driver name
-            Class.forName("oracle.jdbc.driver.OracleDriver");
-            ebsCon = DriverManager.getConnection(
-                    ebsConnectionUrl, ebsDtlsWithConnectnName.getUserName(), ebsDtlsWithConnectnName.getPassword());
         } catch (Exception e) {
             log.error("Error getting EBS connection: {} ", e.getMessage());
             throw new ValidationException("Please cross verify ebs connection details");
@@ -205,32 +230,35 @@ public class CrEbsConnectionServiceImpl {
             Long objectId = crLoadMetaDataFromEbsReqPo.getObjectId();
             String metaDataTableName = crLoadMetaDataFromEbsReqPo.getMetaDataTableName();
             Long metaDataTableId = crSourceTableRepo.getTableId(metaDataTableName);
+            CrEbsConnectionDetails ebsDtlsWithConnectnName = crEbsConnectionDetailsRepository
+                    .findByConnectionName(crLoadMetaDataFromEbsReqPo.getConnectionName());
+            if (ebsDtlsWithConnectnName == null) {
+                throw new ValidationException("EBS connection doesn't exist");
+            }
             if (metaDataTableId != null)
                 throw new ValidationException("MetaDataTableName already exists");
             // Retrieve Ebs View query
-            if(dbLinkEnabled) {
-                ebsQuery = replaceEbsQueryWithDbLink(crLoadMetaDataFromEbsReqPo.getObjectId(), crLoadMetaDataFromEbsReqPo.getConnectionName());
-            }
-            else {
-                ebsQuery = getEbsQueryWithoutDbLink(crLoadMetaDataFromEbsReqPo.getObjectId());
+            if (dbLinkEnabled) {
+                ebsQuery = replaceEbsQueryWithDbLink(crLoadMetaDataFromEbsReqPo.getObjectId(), crLoadMetaDataFromEbsReqPo.getConnectionName(), ebsDtlsWithConnectnName.getConnectionType());
+            } else {
+                ebsQuery = getEbsQueryWithoutDbLink(crLoadMetaDataFromEbsReqPo.getObjectId(), ebsDtlsWithConnectnName.getConnectionType());
             }
 
-            log.info("EBS Query: "+ebsQuery);
+            log.info("EBS Query: " + ebsQuery);
 
             // create database connection
             log.info("TENANT-->" + request.getHeader("X-TENANT-ID"));
             con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(request.getHeader("X-TENANT-ID"));
 
             String ebcConnectionName = crLoadMetaDataFromEbsReqPo.getConnectionName();
-            ebsCon = getEbsConnection(ebcConnectionName);
+            ebsCon = getEbsConnection(ebcConnectionName, ebsDtlsWithConnectnName);
 
             //If DBLink is enabled then get metadata using DBLink else use EBS jdbc connection
             if (dbLinkEnabled) {
                 stmnt = con.prepareStatement(ebsQuery);
                 rs = stmnt.executeQuery();
                 rsmd = rs.getMetaData();
-            }
-            else {
+            } else {
                 stmnt = ebsCon.prepareStatement(ebsQuery);
                 rs = stmnt.executeQuery();
                 rsmd = rs.getMetaData();
@@ -291,16 +319,24 @@ public class CrEbsConnectionServiceImpl {
             String nullableFlag = "";
             for (int i = 1; i < numColumns + 1; i++) {
                 String columnName = rsmd.getColumnName(i);
-                String columnType = rsmd.getColumnTypeName(i);
+                String columnType = rsmd.getColumnTypeName(i).toUpperCase();
 
                 int isNullable = rsmd.isNullable(numColumns);
-                if (columnType.contains("VARCHAR") || columnType.contains("CHAR"))
+                if (columnType.contains("VARCHAR") || columnType.contains("CHAR") ||
+                        columnType.contains("NVARCHAR"))
                     columnType = "V";
-                else if (columnType.equalsIgnoreCase("NUMBER"))
+                else if (columnType.equalsIgnoreCase("NUMBER") ||
+                        columnType.contains("NUMERIC") ||
+                        columnType.equalsIgnoreCase("DECIMAL") ||
+                        columnType.equalsIgnoreCase("FLOAT") ||
+                        columnType.equalsIgnoreCase("BIGINT") ||
+                        columnType.equalsIgnoreCase("BIT")||
+                        columnType.equalsIgnoreCase("INT")   )
                     columnType = "N";
                 else if (columnType.equalsIgnoreCase("DATE"))
                     columnType = "D";
-                else if (columnType.equalsIgnoreCase("TIMESTAMP"))
+                else if (columnType.equalsIgnoreCase("TIMESTAMP") ||
+                        columnType.contains("TIME"))
                     columnType = "T";
                 int columnSize = rsmd.getColumnDisplaySize(i);
                 if (columnSize == 0)
@@ -330,16 +366,22 @@ public class CrEbsConnectionServiceImpl {
         }
     }
 
-    private String getEbsQuery(Long objectId) throws Exception {
+    private String getEbsQuery(Long objectId, String connectionType) throws Exception {
         Connection con = null;
         PreparedStatement stmnt = null;
         ResultSet rs = null;
         String ebsQuery = null;
         try {
             con = masterDataSource.getConnection();
+            String query = "";
+            if ("Azure".equalsIgnoreCase(connectionType)) {
+                query = "select info_value from cr_object_information where object_id=? and info_type='AZURE_EXTRACTION_QUERY' ";
+            } else {
+                query = "select info_value from cr_object_information where object_id=? and info_type='SQL_EXTRACTION_QUERY' ";
+
+            }
             // create Prepared Statement
-            stmnt = con.prepareStatement(
-                    "select info_value from cr_object_information where object_id=? and info_type='SQL_EXTRACTION_QUERY' ");
+            stmnt = con.prepareStatement(query);
             stmnt.setLong(1, objectId);
             rs = stmnt.executeQuery();
             if (rs.next())
@@ -367,7 +409,7 @@ public class CrEbsConnectionServiceImpl {
         try {
             log.info("======loadSrcDataFromEbs======");
             log.info("DBLink Enabled: " + dbLinkEnabled);
-            Long  batchCap = crLoadDataFromEbsReqPo.getBatchSize();
+            Long batchCap = crLoadDataFromEbsReqPo.getBatchSize();
             if (crLoadDataFromEbsReqPo.getBatchName().toLowerCase().indexOf("cr20") != -1)
                 throw new ValidationException("Please don't use CR20 value in batchName");
             Optional<CrSourceTemplateHeadersView> srcTempHrdOpt = crSourceTemplateHeadersViewRepo
@@ -377,6 +419,11 @@ public class CrEbsConnectionServiceImpl {
             else
                 crSourceTemplateHeaders = srcTempHrdOpt.get();
             String srcStagingTable = crSourceTemplateHeaders.getStagingTableName();
+            CrEbsConnectionDetails ebsDtlsWithConnectnName = crEbsConnectionDetailsRepository
+                    .findByConnectionName(crLoadDataFromEbsReqPo.getConnectionName());
+            if (ebsDtlsWithConnectnName == null) {
+                throw new ValidationException("EBS connection doesn't exist");
+            }
             // create database connection
             log.info("TENANT-->" + request.getHeader("X-TENANT-ID"));
             con = dynamicDataSourceBasedMultiTenantConnectionProvider
@@ -388,10 +435,10 @@ public class CrEbsConnectionServiceImpl {
             int recCount = 0;
             if (rs.next()) {
                 recCount = rs.getInt("count(*)");
-                log.info("Record Count in "+ srcStagingTable +": " + recCount);
+                log.info("Record Count in " + srcStagingTable + ": " + recCount);
             }
             countStmnt.close();
-            boolean  existingBatchDetails = crBatchProcessingDetailsRepo.existsBySrcTempIdAndBatchName(
+            boolean existingBatchDetails = crBatchProcessingDetailsRepo.existsBySrcTempIdAndBatchName(
                     crLoadDataFromEbsReqPo.getSrcTemplateId(),
                     crLoadDataFromEbsReqPo.getBatchName()
             );
@@ -408,10 +455,9 @@ public class CrEbsConnectionServiceImpl {
             int count = 0;
             try {
                 if (dbLinkEnabled) {
-                    count = insertEbsSourceDataWithDBLink(crLoadDataFromEbsReqPo, crSourceTemplateHeaders, con, srcStagingTable, srcTemplateId);
-                }
-                else {
-                    count = insertEbsSourceDataWithoutDBLink(crLoadDataFromEbsReqPo, crSourceTemplateHeaders, con, srcStagingTable, srcTemplateId);
+                    count = insertEbsSourceDataWithDBLink(crLoadDataFromEbsReqPo, crSourceTemplateHeaders, con, srcStagingTable, srcTemplateId, ebsDtlsWithConnectnName);
+                } else {
+                    count = insertEbsSourceDataWithoutDBLink(crLoadDataFromEbsReqPo, crSourceTemplateHeaders, con, srcStagingTable, srcTemplateId, ebsDtlsWithConnectnName);
                 }
                 log.info("Total records inserted into EBS source staging table: " + count);
 
@@ -419,12 +465,11 @@ public class CrEbsConnectionServiceImpl {
                 generateOrigTransRefDaoImpl.generateOrigTranRef(srcTemplateId, srcStagingTable, request,
                         crLoadDataFromEbsReqPo.getBatchName());
 
-                CrLoadDataResPo crLoadDataResPo =new CrLoadDataResPo();
-                if(batchCap!=null && batchCap>0) {
+                CrLoadDataResPo crLoadDataResPo = new CrLoadDataResPo();
+                if (batchCap != null && batchCap > 0) {
                     crLoadDataResPo = batchWiseProcessingDaoImpl.srcDataBatchProcessing(crLoadDataFromEbsReqPo.getBatchName(), crLoadDataFromEbsReqPo.getBatchSize(), crLoadDataFromEbsReqPo.getParentStgTableName(), crLoadDataFromEbsReqPo.getParentColumn(), srcStagingTable);
                     crLoadDataResPo.setCount(count);
-                }
-                else{
+                } else {
                     crLoadDataResPo.setCount(count);
                     basicResponsePo.setPayload(crLoadDataResPo);
                 }
@@ -438,7 +483,7 @@ public class CrEbsConnectionServiceImpl {
                 basicResponsePo.setPayload(crLoadDataResPo);
                 basicResponsePo.setMessage(count + " records loaded successfully into " + srcStagingTable);
             } catch (Exception e) {
-                log.error("Error in loadSrcDataFromEbs----->"+e.getMessage());
+                log.error("Error in loadSrcDataFromEbs----->" + e.getMessage());
                 crProcessRequestsRes.setStatus("E");
                 crProcessRequestsRes.setTotalRecords(count);
                 crProcessRequestsRes.setErrorMsg(e.getMessage());
@@ -458,20 +503,20 @@ public class CrEbsConnectionServiceImpl {
         return basicResponsePo;
     }
 
-    private String getEbsQueryWithoutDbLink(Long objectId) throws Exception {
+    private String getEbsQueryWithoutDbLink(Long objectId, String connectionType) throws Exception {
         log.info("======getEbsQueryWithoutDbLink======");
         // Retrieve EBS Extraction Query
-        String ebsQuery = getEbsQuery(objectId);
+        String ebsQuery = getEbsQuery(objectId, connectionType);
         if (Validations.isNullOrEmpty(ebsQuery))
             throw new ValidationException("EBS sql extraction query is not present");
         ebsQuery = ebsQuery.replaceAll("\\@\\{0\\}", "");
         return ebsQuery;
     }
 
-    private String replaceEbsQueryWithDbLink(Long objectId, String connectionName) throws Exception {
+    private String replaceEbsQueryWithDbLink(Long objectId, String connectionName, String connectionType) throws Exception {
         log.info("======replaceEbsQueryWithDbLink======");
         // Retrieve EBS Extraction Query
-        String ebsQuery = getEbsQuery(objectId);
+        String ebsQuery = getEbsQuery(objectId, connectionType);
         if (Validations.isNullOrEmpty(ebsQuery))
             throw new ValidationException("EBS sql extraction query is not present");
         CrEbsConnectionDetails ebsConnectionDetails = crEbsConnectionDetailsRepository
@@ -481,7 +526,7 @@ public class CrEbsConnectionServiceImpl {
         return ebsQuery;
     }
 
-    private int insertEbsSourceDataWithDBLink(CrLoadDataFromEbsReqPo crLoadDataFromEbsReqPo, CrSourceTemplateHeadersView crSourceTemplateHeaders, Connection conn, String srcStagingTable, Long srcTemplateId) throws Exception {
+    private int insertEbsSourceDataWithDBLink(CrLoadDataFromEbsReqPo crLoadDataFromEbsReqPo, CrSourceTemplateHeadersView crSourceTemplateHeaders, Connection conn, String srcStagingTable, Long srcTemplateId, CrEbsConnectionDetails ebsDtlsWithConnectnName) throws Exception {
         log.info("Start of EBS source data insertion using DBLink.");
         StopWatch watch = new StopWatch();
         watch.start();
@@ -490,33 +535,35 @@ public class CrEbsConnectionServiceImpl {
 
         // Retrieve Ebs View query
         String ebsQuery = replaceEbsQueryWithDbLink(crSourceTemplateHeaders.getObjectId(),
-                crLoadDataFromEbsReqPo.getConnectionName());
-
+                crLoadDataFromEbsReqPo.getConnectionName(), ebsDtlsWithConnectnName.getConnectionType());
+        //replace bind variables
+        ebsQuery = replaceWithBindVals(ebsQuery, crLoadDataFromEbsReqPo);
+        log.info("ebsQuery bind" + ebsQuery);
         // Inserting data into staging table
         StringBuffer sb = new StringBuffer("INSERT INTO " + srcStagingTable + "   SELECT '" + srcTemplateId
                 + "',NULL,NULL,ROWNUM,b.* ,ROWNUM,'" + crLoadDataFromEbsReqPo.getBatchName() + "' FROM ( ");
         sb.append(ebsQuery);
         sb.append(") b");
         String sqlQuery = sb.toString();
-        log.info("SQL Query to insert data into EBS source staging table: "+sqlQuery);
+        log.info("SQL Query to insert data into EBS source staging table: " + sqlQuery);
         int count = 0;
         try {
             // create Prepared Statement
             stmnt = conn.prepareStatement(sqlQuery);
             count = stmnt.executeUpdate();
-        } catch(SQLException e) {
-            log.error("Rolling back ebs data inserts due to SQL exception: "+e.getMessage());
+        } catch (SQLException e) {
+            log.error("Rolling back ebs data inserts due to SQL exception: " + e.getMessage());
             throw e;
         } finally {
             if (stmnt != null)
                 stmnt.close();
         }
         watch.stop();
-        log.info("EBS source data insertion using DBLink completed in "+watch.getTotalTimeSeconds()+" seconds");
+        log.info("EBS source data insertion using DBLink completed in " + watch.getTotalTimeSeconds() + " seconds");
         return count;
     }
 
-    private int insertEbsSourceDataWithoutDBLink(CrLoadDataFromEbsReqPo crLoadDataFromEbsReqPo, CrSourceTemplateHeadersView crSourceTemplateHeaders, Connection conn, String srcStagingTable, Long srcTemplateId) throws Exception {
+    private int insertEbsSourceDataWithoutDBLink(CrLoadDataFromEbsReqPo crLoadDataFromEbsReqPo, CrSourceTemplateHeadersView crSourceTemplateHeaders, Connection conn, String srcStagingTable, Long srcTemplateId, CrEbsConnectionDetails ebsDtlsWithConnectnName) throws Exception {
         log.info("Start of EBS source data insertion without using DBLink.");
         StopWatch watch = new StopWatch();
         watch.start();
@@ -525,15 +572,17 @@ public class CrEbsConnectionServiceImpl {
         PreparedStatement stmnt = null;
 
         // Retrieve Ebs View query
-        String ebsQuery = getEbsQueryWithoutDbLink(crSourceTemplateHeaders.getObjectId());
-        log.info("EBS Query: "+ebsQuery);
-
+        String ebsQuery = getEbsQueryWithoutDbLink(crSourceTemplateHeaders.getObjectId(), ebsDtlsWithConnectnName.getConnectionType());
+        log.info("EBS Query: " + ebsQuery);
+        //replace bind variables
+        ebsQuery = replaceWithBindVals(ebsQuery, crLoadDataFromEbsReqPo);
+        log.info("ebsQuery bind" + ebsQuery);
         String ebcConnectionName = crLoadDataFromEbsReqPo.getConnectionName();
-        log.info("EBS connection Name: "+ebcConnectionName);
+        log.info("EBS connection Name: " + ebcConnectionName);
 
         String batchName = crLoadDataFromEbsReqPo.getBatchName();
 
-        ebsCon = getEbsConnection(ebcConnectionName);
+        ebsCon = getEbsConnection(ebcConnectionName, ebsDtlsWithConnectnName);
 
         // create EBS Prepared Statement
         stmnt = ebsCon.prepareStatement(ebsQuery);
@@ -553,11 +602,11 @@ public class CrEbsConnectionServiceImpl {
         for (int i = 1; i <= meta.getColumnCount(); i++)
             columns.add(meta.getColumnName(i));
 
-        String insertSQL = "INSERT INTO " + srcStagingTable + " VALUES ('"+ srcTemplateId
+        String insertSQL = "INSERT INTO " + srcStagingTable + " VALUES ('" + srcTemplateId
                 + "',NULL,NULL,?,"
                 + columns.stream().map(c -> "?").collect(Collectors.joining(", "))
                 + ",?,'" + batchName + "')";
-        log.info("SQL stmt for inserting EBS dta into Source Data Staging :" +insertSQL);
+        log.info("SQL stmt for inserting EBS dta into Source Data Staging :" + insertSQL);
 
         try {
 
@@ -591,11 +640,11 @@ public class CrEbsConnectionServiceImpl {
                 conn.commit();
                 conn.setAutoCommit(true);
             }
-        } catch(SQLException e) {
+        } catch (SQLException e) {
             // Roll back all the inserts
             if (conn != null)
                 conn.rollback();
-            log.error("Rolling back ebs data inserts due to SQL exception: "+e.getMessage());
+            log.error("Rolling back ebs data inserts due to SQL exception: " + e.getMessage());
             throw e;
         } finally {
             if (ebsCon != null)
@@ -604,7 +653,7 @@ public class CrEbsConnectionServiceImpl {
                 stmnt.close();
         }
         watch.stop();
-        log.info("EBS source data insertion without DBLink completed in "+watch.getTotalTimeSeconds()+" seconds");
+        log.info("EBS source data insertion without DBLink completed in " + watch.getTotalTimeSeconds() + " seconds");
         return totalCount;
     }
 
@@ -629,9 +678,9 @@ public class CrEbsConnectionServiceImpl {
         return crProcessRequestsRes;
     }
 
-    public BasicResponsePo getEbsAdaptorEnableFlag(Long objectId) throws Exception {
+    public BasicResponsePo getEbsAdaptorEnableFlag(Long objectId, String connectionType) throws Exception {
         BasicResponsePo responsePo = new BasicResponsePo();
-        String ebsQuery = getEbsQuery(objectId);
+        String ebsQuery = getEbsQuery(objectId, connectionType);
         responsePo.setMessage("Successfully retrieved Ebs Adaptor EnableFlag");
         responsePo.setPayload(Map.of("ebsAdaptorFlag", Validations.isNullOrEmpty(ebsQuery) ? "N" : "Y"));
         return responsePo;
@@ -655,5 +704,20 @@ public class CrEbsConnectionServiceImpl {
         basicResponsePo.setMessage("Deleted successfully ebs connection details ");
         basicResponsePo.setPayload("Deleted successfully ebs connection details for connectionId :" + connectionId);
         return basicResponsePo;
+    }
+
+    private String replaceWithBindVals(String ebsQuery, CrLoadDataFromEbsReqPo crLoadDataFromEbsReqPo) {
+        List<CrSqlextractionBindVarDtls> crSqlextractionBindVarDtls = sqlextractionBindVarDtlsRepository.findByBatchNameAndSrcTemplateId(crLoadDataFromEbsReqPo.getBatchName(), crLoadDataFromEbsReqPo.getSrcTemplateId());
+
+        if (crSqlextractionBindVarDtls != null) {
+            for (CrSqlextractionBindVarDtls bindVarDtls : crSqlextractionBindVarDtls) {
+                if (bindVarDtls.getBindVariableValue() != null) {
+                    ebsQuery = ebsQuery.replace(":" + bindVarDtls.getBindVariable(), "'" + bindVarDtls.getBindVariableValue() + "'");
+                } else if (bindVarDtls.getBindWhereClob() != null) {
+                    ebsQuery = ebsQuery.replace(bindVarDtls.getBindVariable(), bindVarDtls.getBindWhereClob());
+                }
+            }
+        }
+        return ebsQuery;
     }
 }
