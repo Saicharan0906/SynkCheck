@@ -861,13 +861,22 @@ public class CrCldImportCustomRestApisServiceImpl {
     }
 
     private String validateAndSanitizeUrl(String url) {
+        // Check for null or blank input
+        if (url == null || url.isBlank()) {
+            throw new IllegalArgumentException("URL cannot be null or blank");
+        }
+
         try {
             URI uri = new URI(url);
+
+            // Allow only HTTPS protocol
             if (!"https".equalsIgnoreCase(uri.getScheme())) {
-                throw new IllegalArgumentException("Invalid or unsafe URL: " + url);
+                throw new IllegalArgumentException("Only HTTPS URLs are allowed: " + url);
             }
-            // Validate IP address
+
+            // Validate the host to prevent internal/private IP access
             validateIpAddress(uri.getHost());
+
             return uri.toString();
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Malformed URL: " + url, e);
