@@ -46,8 +46,8 @@ public class CrCldImportCustomRestApisController {
     @PostMapping("/createbank")
     public ResponseEntity<?> createOrUpdateBank(@RequestBody CustomRestApiReqPo customRestApiReqPo) throws Exception {
         // Validate and sanitize the input at the controller level
-        validateAndSanitizeInput(customRestApiReqPo);
-        cldImportCustomRestApisServiceImpl.createOrUpdateBank(customRestApiReqPo);
+       String cloudUrl = validateAndSanitizeInput(customRestApiReqPo);
+        cldImportCustomRestApisServiceImpl.createOrUpdateBank(customRestApiReqPo,cloudUrl);
         return new ResponseEntity<>("successful", HttpStatus.OK);
     }
 
@@ -146,7 +146,8 @@ public class CrCldImportCustomRestApisController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    private void validateAndSanitizeInput(CustomRestApiReqPo customRestApiReqPo) {
+
+    private String validateAndSanitizeInput(CustomRestApiReqPo customRestApiReqPo) {
         // Validate and sanitize the cloudUrl
         String cloudUrl = customRestApiReqPo.getCloudUrl();
         if (cloudUrl == null || cloudUrl.isBlank()) {
@@ -173,15 +174,14 @@ public class CrCldImportCustomRestApisController {
             throw new IllegalArgumentException("Malformed URL: " + cloudUrl, e);
         }
 
-        // Sanitize the bankCloudUrl path
-        String bankCloudUrl = customRestApiReqPo.getCloudUrl();
-        if (bankCloudUrl == null || bankCloudUrl.isBlank()) {
+        if (cloudUrl.isBlank()) {
             throw new IllegalArgumentException("Bank Cloud URL cannot be null or blank");
         }
 
-        if (!bankCloudUrl.startsWith("/") || bankCloudUrl.contains("..")) {
-            throw new IllegalArgumentException("Invalid Bank Cloud URL: " + bankCloudUrl);
+        if (!cloudUrl.startsWith("/") || cloudUrl.contains("..")) {
+            throw new IllegalArgumentException("Invalid Bank Cloud URL: " + cloudUrl);
         }
+        return cloudUrl;
     }
 
     private boolean isAllowedHost(String host) {

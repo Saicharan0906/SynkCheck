@@ -577,7 +577,7 @@ public class CrCldImportCustomRestApisServiceImpl {
 //            }
 //        }
 //    }
-    public void createOrUpdateBank(CustomRestApiReqPo customRestApiReqPo) {
+    public void createOrUpdateBank(CustomRestApiReqPo customRestApiReqPo,String cloudUrl) {
         log.info("Start of createOrUpdateBank Method in service ###");
 
         List<CrCreateBankBranchErrors> banksErrorsLi = new ArrayList<>();
@@ -613,7 +613,7 @@ public class CrCldImportCustomRestApisServiceImpl {
                 stmtA.setString(1, customRestApiReqPo.getBatchName());
 
                 try (ResultSet resultSetA = stmtA.executeQuery()) {
-                    List<CrBanksResPo> banksList = getAllCashBanks(headers, customRestApiReqPo);
+                    List<CrBanksResPo> banksList = getAllCashBanks(headers, cloudUrl);
                     Set<Long> bankPartyIds = banksList.stream()
                             .map(CrBanksResPo::getBankPartyId)
                             .collect(Collectors.toSet());
@@ -770,11 +770,11 @@ public class CrCldImportCustomRestApisServiceImpl {
     }
 
 
-    private List<CrBanksResPo> getAllCashBanks(HttpHeaders headers, CustomRestApiReqPo customRestApiReqPo) {
+    private List<CrBanksResPo> getAllCashBanks(HttpHeaders headers, String cldUrl) {
         RestTemplate restTemplate = new RestTemplate();
         try {
             // Validate and sanitize the base URL
-            String baseUrl = validateAndSanitizeUrl(customRestApiReqPo.getCloudUrl());
+            String baseUrl = validateAndSanitizeUrl(cldUrl);
             String branchPath = sanitizePath(bankCloudUrl);
 
             // Construct the complete URL safely
