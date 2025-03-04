@@ -1,6 +1,8 @@
 package com.rite.products.convertrite.service;
 
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -590,27 +592,34 @@ public class LoadMetaDataServiceImpl implements LoadMetaDataService {
 	@Override
 	public String uploadFileToFtp(MultipartFile file) throws Exception {
 		log.info("Start of uploadFileToFtp in service ####");
+
 		String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+
+		//  Remove path traversal characters like "../"
+		Path targetPath = Paths.get(remoteDir).resolve(fileName).normalize();
+
+		//  Prevent escaping the allowed directory
+		if (!targetPath.startsWith(Paths.get(remoteDir).normalize())) {
+			throw new SecurityException("Invalid file path detected!");
+		}
+
 		ChannelSftp channelSftp = null;
 		Session jschSession = null;
 		try {
-			if("SFTP".equalsIgnoreCase(fileTransfer)) {
+			if ("SFTP".equalsIgnoreCase(fileTransfer)) {
 				jschSession = utils.setupJschSession();
 				channelSftp = (ChannelSftp) jschSession.openChannel("sftp");
 				channelSftp.connect();
 				channelSftp.cd(remoteDir);
 				channelSftp.put(file.getInputStream(), fileName);
-			}
-			else if("NFS".equalsIgnoreCase(fileTransfer)){
-				log.info(remoteDir + fileName);
-				File destinationFile = new File(remoteDir + fileName);
-				// Copy the file to the server folder
+			} else if ("NFS".equalsIgnoreCase(fileTransfer)) {
+				File destinationFile = targetPath.toFile();  // Safe file path
 				file.transferTo(destinationFile);
 			}
-		}catch(Exception e){
-			log.error(e.getMessage());
-		}
-			finally {
+		} catch (Exception e) {
+			log.error("File upload failed: " + e.getMessage());
+			throw e;  //  Rethrow exception for proper error handling
+		} finally {
 			if (channelSftp != null) {
 				channelSftp.exit();
 				channelSftp.disconnect();
@@ -618,9 +627,10 @@ public class LoadMetaDataServiceImpl implements LoadMetaDataService {
 			if (jschSession != null)
 				jschSession.disconnect();
 		}
-//		log.info("End of uploadFileToFtp in service ####");
+
 		return fileName;
 	}
+
 
 	@Transactional
 	@Override
