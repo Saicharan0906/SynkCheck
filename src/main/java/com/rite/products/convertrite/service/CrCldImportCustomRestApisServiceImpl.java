@@ -831,10 +831,10 @@ public class CrCldImportCustomRestApisServiceImpl {
         try {
             // Validate the base URL to prevent SSRF attacks
             String baseUrl = validateAndSanitizeUrl(customRestApiReqPo.getCloudUrl());
-
+            String branchPath = sanitizePath(branchCloudUrl);
             // Construct the complete URL safely
             URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl)
-                    .path(branchCloudUrl)  // Ensure this is a safe predefined path
+                    .path(branchPath)
                     .build()
                     .toUri();
 
@@ -851,13 +851,26 @@ public class CrCldImportCustomRestApisServiceImpl {
                         .map(item -> objectMapper.convertValue(item, CrBranchesResPo.class))
                         .collect(Collectors.toList());
             } else {
-                log.warn("Unexpected response structure or empty list");
+                log.error("Unexpected response structure or empty list");
                 return Collections.emptyList();
             }
         } catch (Exception e) {
             log.error("An error occurred while fetching cash bank accounts", e);
             return Collections.emptyList();
         }
+    }
+
+    private String sanitizePath(String path) {
+        if (path == null || path.isBlank()) {
+            throw new IllegalArgumentException("branch_cloud_url is not configured or is empty.");
+        }
+
+        // Ensure path starts with '/' and does not contain ".." to prevent directory traversal
+        if (!path.startsWith("/") || path.contains("..")) {
+            throw new IllegalArgumentException("Invalid branch_cloud_url: " + path);
+        }
+
+        return path;
     }
 
     private String validateAndSanitizeUrl(String url) {
