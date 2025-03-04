@@ -774,11 +774,11 @@ public class CrCldImportCustomRestApisServiceImpl {
         RestTemplate restTemplate = new RestTemplate();
         try {
             // Validate and sanitize the base URL
-            String baseUrl = validateAndSanitizeUrl(cldUrl);
+//            String baseUrl = validateAndSanitizeUrl(cldUrl);
             String branchPath = sanitizePath(bankCloudUrl);
 
             // Construct the complete URL safely
-            URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl)
+            URI uri = UriComponentsBuilder.fromHttpUrl(cldUrl)
                     .path(branchPath)
                     .build()
                     .toUri();
