@@ -558,7 +558,7 @@ public class CrDataService {
         RecordsPostJobExcecutionPo recordsPostJobExecutionPo = crCloudTemplateHeadersRepository.getRecordsPostJobExecution(crCloudRecordsReqPo.getCloudTemplateName());
 
         if (recordsPostJobExecutionPo == null || recordsPostJobExecutionPo.getCloudTableName() == null) {
-            throw new Exception("There is no cloud template name in this pod: "+ crCloudRecordsReqPo.getCloudTemplateName());
+            throw new Exception("There is no cloud template name in this pod: " + crCloudRecordsReqPo.getCloudTemplateName());
         }
 
         ResultSet rs = null;
@@ -570,16 +570,20 @@ public class CrDataService {
         String cloudTableName = recordsPostJobExecutionPo.getCloudTableName();
         String sourceTableName = recordsPostJobExecutionPo.getSourceTableName();
         try {
-            // count of Records
+            // Count of Records
             if (responseType.equals("JSON")) {
                 StringBuilder countSqlBuilder = new StringBuilder("SELECT count(*) FROM ");
                 countSqlBuilder.append(cloudTableName).append(" where CR_BATCH_NAME='").append(batchName).append("'");
-                log.info("Count SQlQuery: "+countSqlBuilder.toString());
+                log.info("Count SQL Query: " + countSqlBuilder.toString());
                 Query countQuery = entityManager.createNativeQuery(countSqlBuilder.toString());
                 Object count = countQuery.getSingleResult();
-                log.info("count:"+count);
-                response.setHeader("count", String.valueOf(count));
+                log.info("Raw count value: " + count);
+
+                // Sanitize the count value before setting it in the response header
+                String sanitizedCount = count.toString().replaceAll("[^0-9]", ""); // Allow only digits
+                response.setHeader("X-Count", sanitizedCount);
             }
+
             StringBuilder sqlBuilder = new StringBuilder();
             if (responseType.equals("JSON"))
                 sqlBuilder.append("select * from (");
@@ -609,10 +613,9 @@ public class CrDataService {
                 throw new IllegalArgumentException("Unsupported response type: " + responseType);
             }
         } catch (Exception e) {
-            log.error("Exception while retrieving cloud staging records: "+e.getMessage());
+            log.error("Exception while retrieving cloud staging records: " + e.getMessage());
             throw e;
-        }
-        finally {
+        } finally {
             if (writer != null) {
                 writer.close();
             }
@@ -627,6 +630,7 @@ public class CrDataService {
             }
         }
     }
+
 
     private void processResultSetAsJson(ResultSet rs, HttpServletResponse response, PrintWriter writer) throws Exception {
         response.setContentType("application/json");
