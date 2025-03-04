@@ -18,6 +18,8 @@ import com.rite.products.convertrite.stubs.accountcombinationservice.AccountComb
 import com.rite.products.convertrite.utils.Utils;
 import com.rite.products.convertrite.utils.ValidateAndCreateClass;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,6 +45,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 @Slf4j
@@ -793,22 +796,56 @@ public class CrCldImportCustomRestApisServiceImpl {
         }
     }
 
+//    private List<CrBranchesResPo> getAllCashBranches(HttpHeaders headers, CustomRestApiReqPo customRestApiReqPo) {
+//        RestTemplate restTemplate = new RestTemplate();
+//        try {
+//            HttpEntity<String> entity = new HttpEntity<>(headers);
+//            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+//                    customRestApiReqPo.getCloudUrl() + branchCloudUrl,
+//                    HttpMethod.GET,
+//                    entity,
+//                    new ParameterizedTypeReference<Map<String, Object>>() {
+//                    }
+//            );
+//
+//            Map<String, Object> responseBody = response.getBody();
+//            //log.info("responseBody------>" + responseBody);
+//
+//            if (responseBody.containsKey("items") && responseBody.get("items") instanceof List<?>) {
+//                List<?> items = (List<?>) responseBody.get("items");
+//                return items.stream()
+//                        .map(item -> objectMapper.convertValue(item, CrBranchesResPo.class))
+//                        .collect(Collectors.toList());
+//            } else {
+//                log.warn("Unexpected response structure or empty list");
+//                return Collections.emptyList();
+//            }
+//        } catch (Exception e) {
+//            log.error("An error occurred while fetching cash bank accounts", e);
+//            return Collections.emptyList();
+//        }
+//    }
+
     private List<CrBranchesResPo> getAllCashBranches(HttpHeaders headers, CustomRestApiReqPo customRestApiReqPo) {
         RestTemplate restTemplate = new RestTemplate();
         try {
+            // Validate the base URL to prevent SSRF attacks
+            String baseUrl = validateAndSanitizeUrl(customRestApiReqPo.getCloudUrl());
+
+            // Construct the complete URL safely
+            URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl)
+                    .path(branchCloudUrl)  // Ensure this is a safe predefined path
+                    .build()
+                    .toUri();
+
             HttpEntity<String> entity = new HttpEntity<>(headers);
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                    customRestApiReqPo.getCloudUrl() + branchCloudUrl,
-                    HttpMethod.GET,
-                    entity,
-                    new ParameterizedTypeReference<Map<String, Object>>() {
+                    uri, HttpMethod.GET, entity, new ParameterizedTypeReference<Map<String, Object>>() {
                     }
             );
 
             Map<String, Object> responseBody = response.getBody();
-            //log.info("responseBody------>" + responseBody);
-
-            if (responseBody.containsKey("items") && responseBody.get("items") instanceof List<?>) {
+            if (responseBody != null && responseBody.containsKey("items") && responseBody.get("items") instanceof List<?>) {
                 List<?> items = (List<?>) responseBody.get("items");
                 return items.stream()
                         .map(item -> objectMapper.convertValue(item, CrBranchesResPo.class))
@@ -820,6 +857,19 @@ public class CrCldImportCustomRestApisServiceImpl {
         } catch (Exception e) {
             log.error("An error occurred while fetching cash bank accounts", e);
             return Collections.emptyList();
+        }
+    }
+
+    private String validateAndSanitizeUrl(String url) {
+        try {
+            URI uri = new URI(url);
+            if (!"https".equalsIgnoreCase(uri.getScheme())) {
+                throw new IllegalArgumentException("Invalid or unsafe URL: " + url);
+            }
+
+            return uri.toString();
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Malformed URL: " + url, e);
         }
     }
 
