@@ -865,10 +865,8 @@ public class CrCldImportCustomRestApisServiceImpl {
         if (url == null || url.isBlank()) {
             throw new IllegalArgumentException("URL cannot be null or blank");
         }
-
         try {
             URI uri = new URI(url);
-
             // Allow only HTTPS protocol
             if (!"https".equalsIgnoreCase(uri.getScheme())) {
                 throw new IllegalArgumentException("Only HTTPS URLs are allowed: " + url);
