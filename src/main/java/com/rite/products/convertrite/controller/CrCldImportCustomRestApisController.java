@@ -8,6 +8,11 @@ import com.rite.products.convertrite.service.CrCldImportCustomRestApisServiceImp
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.UnknownHostException;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +45,8 @@ public class CrCldImportCustomRestApisController {
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful Response"), @ApiResponse(code = 500, message = "Server Side Error"), @ApiResponse(code = 400, message = "Bad Request")})
     @PostMapping("/createbank")
     public ResponseEntity<?> createOrUpdateBank(@RequestBody CustomRestApiReqPo customRestApiReqPo) throws Exception {
+        // Validate and sanitize the input at the controller level
+        validateAndSanitizeInput(customRestApiReqPo);
         cldImportCustomRestApisServiceImpl.createOrUpdateBank(customRestApiReqPo);
         return new ResponseEntity<>("successful", HttpStatus.OK);
     }
@@ -137,6 +144,60 @@ public class CrCldImportCustomRestApisController {
             return new ResponseEntity<>(csvData, headers, HttpStatus.OK);
         } catch (IOException e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    private void validateAndSanitizeInput(CustomRestApiReqPo customRestApiReqPo) {
+        // Validate and sanitize the cloudUrl
+        String cloudUrl = customRestApiReqPo.getCloudUrl();
+        if (cloudUrl == null || cloudUrl.isBlank()) {
+            throw new IllegalArgumentException("Cloud URL cannot be null or blank");
+        }
+
+        try {
+            URI uri = new URI(cloudUrl);
+
+            // Allow only HTTPS protocol
+            if (!"https".equalsIgnoreCase(uri.getScheme())) {
+                throw new IllegalArgumentException("Only HTTPS URLs are allowed: " + cloudUrl);
+            }
+
+            // Validate the host against a whitelist of allowed domains
+            String host = uri.getHost();
+            if (!isAllowedHost(host)) {
+                throw new IllegalArgumentException("Access to the specified host is not allowed: " + host);
+            }
+
+            // Validate the IP address to prevent internal/private IP access
+            validateIpAddress(host);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Malformed URL: " + cloudUrl, e);
+        }
+
+        // Sanitize the bankCloudUrl path
+        String bankCloudUrl = customRestApiReqPo.getCloudUrl();
+        if (bankCloudUrl == null || bankCloudUrl.isBlank()) {
+            throw new IllegalArgumentException("Bank Cloud URL cannot be null or blank");
+        }
+
+        if (!bankCloudUrl.startsWith("/") || bankCloudUrl.contains("..")) {
+            throw new IllegalArgumentException("Invalid Bank Cloud URL: " + bankCloudUrl);
+        }
+    }
+
+    private boolean isAllowedHost(String host) {
+        // Define a whitelist of allowed hosts
+        Set<String> allowedHosts = Set.of("trusted-domain.com", "api.trusted-domain.com");
+        return allowedHosts.contains(host);
+    }
+
+    private void validateIpAddress(String host) {
+        try {
+            InetAddress inetAddress = InetAddress.getByName(host);
+            if (inetAddress.isAnyLocalAddress() || inetAddress.isLoopbackAddress() || inetAddress.isSiteLocalAddress()) {
+                throw new IllegalArgumentException("Access to internal or private IP addresses is not allowed: " + host);
+            }
+        } catch (UnknownHostException e) {
+            throw new IllegalArgumentException("Invalid host: " + host, e);
         }
     }
 }
