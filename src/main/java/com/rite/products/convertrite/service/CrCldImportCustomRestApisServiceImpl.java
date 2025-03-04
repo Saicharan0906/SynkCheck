@@ -811,14 +811,31 @@ public class CrCldImportCustomRestApisServiceImpl {
         restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
         ((HttpComponentsClientHttpRequestFactory) restTemplate.getRequestFactory()).setConnectTimeout(50000); // 50 seconds
         ((HttpComponentsClientHttpRequestFactory) restTemplate.getRequestFactory()).setReadTimeout(50000); // 50 seconds
-
+        String url = customRestApiReqPo.getCloudUrl();
         try {
             // Validate the base URL to prevent SSRF attacks
-            String baseUrl = validateAndSanitizeUrl(customRestApiReqPo.getCloudUrl());
+            // String baseUrl = validateAndSanitizeUrl(customRestApiReqPo.getCloudUrl());
+            if (url == null || url.isBlank()) {
+                throw new IllegalArgumentException("URL cannot be null or blank");
+            }
+            try {
+                URI uri = new URI(url);
+                // Allow only HTTPS protocol
+                if (!"https".equalsIgnoreCase(uri.getScheme())) {
+                    throw new IllegalArgumentException("Only HTTPS URLs are allowed: " + url);
+                }
+
+                // Validate the host to prevent internal/private IP access
+                validateIpAddress(uri.getHost());
+
+
+            } catch (URISyntaxException e) {
+                throw new IllegalArgumentException("Malformed URL: " + url, e);
+            }
             String branchPath = sanitizePath(branchCloudUrl);
 
             // Construct the complete URL safely
-            URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl)
+            URI uri = UriComponentsBuilder.fromHttpUrl(url)
                     .path(branchPath)
                     .build()
                     .toUri();
@@ -880,6 +897,7 @@ public class CrCldImportCustomRestApisServiceImpl {
             throw new IllegalArgumentException("Malformed URL: " + url, e);
         }
     }
+
     private void validateIpAddress(String host) {
         try {
             InetAddress inetAddress = InetAddress.getByName(host);
