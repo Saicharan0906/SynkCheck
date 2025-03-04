@@ -18,8 +18,10 @@ import com.rite.products.convertrite.stubs.accountcombinationservice.AccountComb
 import com.rite.products.convertrite.utils.Utils;
 import com.rite.products.convertrite.utils.ValidateAndCreateClass;
 
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -51,7 +53,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Service
 @Slf4j
 public class CrCldImportCustomRestApisServiceImpl {
-    private static final Set<String> ALLOWED_DOMAINS = Set.of("https://trusted-domain.com", "https://another-trusted-domain.com");
+
     @Autowired
     RestTemplate restTemplate;
     @Autowired
@@ -864,13 +866,21 @@ public class CrCldImportCustomRestApisServiceImpl {
             if (!"https".equalsIgnoreCase(uri.getScheme())) {
                 throw new IllegalArgumentException("Invalid or unsafe URL: " + url);
             }
-            // Check if the domain is in the whitelist
-            if (!ALLOWED_DOMAINS.contains(uri.getHost())) {
-                throw new IllegalArgumentException("Domain not allowed: " + uri.getHost());
-            }
+            // Validate IP address
+            validateIpAddress(uri.getHost());
             return uri.toString();
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Malformed URL: " + url, e);
+        }
+    }
+    private void validateIpAddress(String host) {
+        try {
+            InetAddress inetAddress = InetAddress.getByName(host);
+            if (inetAddress.isAnyLocalAddress() || inetAddress.isLoopbackAddress() || inetAddress.isSiteLocalAddress()) {
+                throw new IllegalArgumentException("Access to internal or private IP addresses is not allowed: " + host);
+            }
+        } catch (UnknownHostException e) {
+            throw new IllegalArgumentException("Invalid host: " + host, e);
         }
     }
 
