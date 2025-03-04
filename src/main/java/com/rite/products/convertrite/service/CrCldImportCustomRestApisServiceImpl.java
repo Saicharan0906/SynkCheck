@@ -51,7 +51,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Service
 @Slf4j
 public class CrCldImportCustomRestApisServiceImpl {
-
+    private static final Set<String> ALLOWED_DOMAINS = Set.of("https://trusted-domain.com", "https://another-trusted-domain.com");
     @Autowired
     RestTemplate restTemplate;
     @Autowired
@@ -825,7 +825,8 @@ public class CrCldImportCustomRestApisServiceImpl {
 
             HttpEntity<String> entity = new HttpEntity<>(headers);
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                    uri, HttpMethod.GET, entity, new ParameterizedTypeReference<Map<String, Object>>() {}
+                    uri, HttpMethod.GET, entity, new ParameterizedTypeReference<Map<String, Object>>() {
+                    }
             );
 
             Map<String, Object> responseBody = response.getBody();
@@ -863,7 +864,10 @@ public class CrCldImportCustomRestApisServiceImpl {
             if (!"https".equalsIgnoreCase(uri.getScheme())) {
                 throw new IllegalArgumentException("Invalid or unsafe URL: " + url);
             }
-
+            // Check if the domain is in the whitelist
+            if (!ALLOWED_DOMAINS.contains(uri.getHost())) {
+                throw new IllegalArgumentException("Domain not allowed: " + uri.getHost());
+            }
             return uri.toString();
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Malformed URL: " + url, e);
