@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -766,22 +767,28 @@ public class CrCldImportCustomRestApisServiceImpl {
 //        }
     }
 
+
     private List<CrBanksResPo> getAllCashBanks(HttpHeaders headers, CustomRestApiReqPo customRestApiReqPo) {
         RestTemplate restTemplate = new RestTemplate();
         try {
+            // Validate and sanitize the base URL
+            String baseUrl = validateAndSanitizeUrl(customRestApiReqPo.getCloudUrl());
+            String branchPath = sanitizePath(bankCloudUrl);
+
+            // Construct the complete URL safely
+            URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl)
+                    .path(branchPath)
+                    .build()
+                    .toUri();
+
             HttpEntity<String> entity = new HttpEntity<>(headers);
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                    customRestApiReqPo.getCloudUrl() + bankCloudUrl,
-                    HttpMethod.GET,
-                    entity,
-                    new ParameterizedTypeReference<Map<String, Object>>() {
+                    uri, HttpMethod.GET, entity, new ParameterizedTypeReference<Map<String, Object>>() {
                     }
             );
 
             Map<String, Object> responseBody = response.getBody();
-            //    log.info("responseBody------>" + responseBody);
-
-            if (responseBody.containsKey("items") && responseBody.get("items") instanceof List<?>) {
+            if (responseBody != null && responseBody.containsKey("items") && responseBody.get("items") instanceof List<?>) {
                 List<?> items = (List<?>) responseBody.get("items");
                 return items.stream()
                         .map(item -> objectMapper.convertValue(item, CrBanksResPo.class))
@@ -796,52 +803,29 @@ public class CrCldImportCustomRestApisServiceImpl {
         }
     }
 
-//    private List<CrBranchesResPo> getAllCashBranches(HttpHeaders headers, CustomRestApiReqPo customRestApiReqPo) {
-//        RestTemplate restTemplate = new RestTemplate();
-//        try {
-//            HttpEntity<String> entity = new HttpEntity<>(headers);
-//            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-//                    customRestApiReqPo.getCloudUrl() + branchCloudUrl,
-//                    HttpMethod.GET,
-//                    entity,
-//                    new ParameterizedTypeReference<Map<String, Object>>() {
-//                    }
-//            );
-//
-//            Map<String, Object> responseBody = response.getBody();
-//            //log.info("responseBody------>" + responseBody);
-//
-//            if (responseBody.containsKey("items") && responseBody.get("items") instanceof List<?>) {
-//                List<?> items = (List<?>) responseBody.get("items");
-//                return items.stream()
-//                        .map(item -> objectMapper.convertValue(item, CrBranchesResPo.class))
-//                        .collect(Collectors.toList());
-//            } else {
-//                log.warn("Unexpected response structure or empty list");
-//                return Collections.emptyList();
-//            }
-//        } catch (Exception e) {
-//            log.error("An error occurred while fetching cash bank accounts", e);
-//            return Collections.emptyList();
-//        }
-//    }
 
     private List<CrBranchesResPo> getAllCashBranches(HttpHeaders headers, CustomRestApiReqPo customRestApiReqPo) {
         RestTemplate restTemplate = new RestTemplate();
+        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+        ((HttpComponentsClientHttpRequestFactory) restTemplate.getRequestFactory()).setConnectTimeout(50000); // 50 seconds
+        ((HttpComponentsClientHttpRequestFactory) restTemplate.getRequestFactory()).setReadTimeout(50000); // 50 seconds
+
         try {
             // Validate the base URL to prevent SSRF attacks
             String baseUrl = validateAndSanitizeUrl(customRestApiReqPo.getCloudUrl());
             String branchPath = sanitizePath(branchCloudUrl);
+
             // Construct the complete URL safely
             URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl)
                     .path(branchPath)
                     .build()
                     .toUri();
 
+            log.info("Making request to URL: {}", uri);
+
             HttpEntity<String> entity = new HttpEntity<>(headers);
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                    uri, HttpMethod.GET, entity, new ParameterizedTypeReference<Map<String, Object>>() {
-                    }
+                    uri, HttpMethod.GET, entity, new ParameterizedTypeReference<Map<String, Object>>() {}
             );
 
             Map<String, Object> responseBody = response.getBody();
@@ -2056,7 +2040,7 @@ public class CrCldImportCustomRestApisServiceImpl {
 
             String stagingTableName = crCloudTemplateHeadersView.getStagingTableName();
 
-            // ✅ Validate Table Name (Prevent SQL Injection)
+            // Validate Table Name (Prevent SQL Injection)
             if (!stagingTableName.matches("^[a-zA-Z0-9_]+$")) {
                 throw new SQLException("Invalid table name: " + stagingTableName);
             }
