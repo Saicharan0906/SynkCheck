@@ -162,27 +162,28 @@ public class CrFbdiServiceImpl implements CrFbdiService {
             throws Exception {
         log.info("Start of downloadFbdiTemplateFromServer Method ###");
 
-        //  Validate input parameters before using them in the URL
+        // Validate input parameters
         if (!isValidInput(fileName) || !isValidInput(version)) {
             throw new IllegalArgumentException("Invalid fileName or version input");
         }
 
         String url = ctlUrlFirstPart + version + ctlUrlSecondPart + fileName;
-
-        // Encode URL to prevent HTTP header injection
         String sanitizedUrl = URLEncoder.encode(url, StandardCharsets.UTF_8);
-
-        //  Set header safely without injection risk
         resp.setHeader("API", sanitizedUrl);
 
-        // Create Temp Directory
-        Path target = Files.createTempDirectory("");
+        // Create a secure temporary directory
+        Path target = Files.createTempDirectory("fbdi_templates");
         log.info("Target Directory: " + target);
 
+        // Ensure filename does not allow path traversal
+        Path safePath = target.resolve(fileName).normalize();
+        if (!safePath.startsWith(target)) {
+            throw new SecurityException("Invalid file path detected");
+        }
+        File file = safePath.toFile();
+
         // Download file safely
-        URL website = new URL(url);
-        File file = new File(target + File.separator + fileName);
-        try (InputStream in = website.openStream();
+        try (InputStream in = new URL(url).openStream();
              OutputStream outputStream = new FileOutputStream(file)) {
             IOUtils.copy(in, outputStream);
         } catch (IOException e) {
@@ -192,8 +193,9 @@ public class CrFbdiServiceImpl implements CrFbdiService {
     }
 
     private boolean isValidInput(String input) {
-        return input != null && input.matches("^[a-zA-Z0-9_.-]+$");
+        return input != null && input.matches("^[a-zA-Z0-9_.-]+$") && !input.contains("..");
     }
+
 
     @Override
     public CrSaveFbdiTempColsResPo saveFbdiTemplateColumns(
