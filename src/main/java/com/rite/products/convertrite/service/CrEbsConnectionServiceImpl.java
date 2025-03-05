@@ -530,18 +530,41 @@ public class CrEbsConnectionServiceImpl {
             try (ResultSet rs = stmnt.executeQuery()) {
                 if (rs.next()) {
                     ebsQuery = rs.getString("info_value");
+                    ebsQuery = sanitizeQuery(ebsQuery); // Secure query validation
                 }
             }
         } catch (SQLException e) {
-            log.error("Error fetching EBS query for objectId: {} and connectionType: {} - {}", objectId, connectionType, e.getMessage(), e);
+            log.error("Error fetching EBS query for objectId: {} and connectionType: {}", objectId, connectionType, e);
             throw e;
         }
 
-        if (ebsQuery == null || ebsQuery.trim().isEmpty()) {
+        if (ebsQuery == null || ebsQuery.isEmpty()) {
             log.warn("EBS Query not found for objectId: {} and connectionType: {}", objectId, connectionType);
         }
 
         return ebsQuery;
+    }
+
+    /**
+     * Validates and sanitizes the extracted query.
+     */
+    private String sanitizeQuery(String query) throws SecurityException {
+        if (query == null || query.trim().isEmpty()) {
+            return null;
+        }
+
+        query = query.trim(); // Remove unnecessary whitespace
+
+        // Basic security check for dangerous SQL keywords
+        String lowerQuery = query.toLowerCase();
+        if (lowerQuery.contains("drop ") || lowerQuery.contains("delete ") || lowerQuery.contains("alter ") ||
+                lowerQuery.contains("truncate ") || lowerQuery.contains("--") || lowerQuery.contains(";")) {
+
+            log.error("Potentially dangerous SQL query detected: {}", query);
+            throw new SecurityException("Unsafe SQL query detected!");
+        }
+
+        return query;
     }
 
 
