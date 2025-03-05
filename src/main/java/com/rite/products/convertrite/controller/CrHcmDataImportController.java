@@ -42,7 +42,8 @@ public class CrHcmDataImportController {
             @ApiResponse(code = 400, message = "Bad Request") })
     @PostMapping("/hcmloadandimportdata")
     public ResponseEntity<HcmLoadAndImportDataRes> hcmLoadAndImportData(
-            @RequestBody HcmLoadandImportDataReqPo hcmLoadandImportDataReqPo, @RequestHeader("Authorization") String bearerToken, HttpServletResponse response) {
+            @RequestBody HcmLoadandImportDataReqPo hcmLoadandImportDataReqPo,
+            @RequestHeader("Authorization") String bearerToken, HttpServletResponse response) {
           HcmLoadAndImportDataRes loadandImportDataResPo = new HcmLoadAndImportDataRes();
         try {
 

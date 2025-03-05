@@ -18,10 +18,8 @@ import com.rite.products.convertrite.stubs.accountcombinationservice.AccountComb
 import com.rite.products.convertrite.utils.Utils;
 import com.rite.products.convertrite.utils.ValidateAndCreateClass;
 
-import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.UnknownHostException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -577,7 +575,7 @@ public class CrCldImportCustomRestApisServiceImpl {
 //            }
 //        }
 //    }
-    public void createOrUpdateBank(CustomRestApiReqPo customRestApiReqPo,String cloudUrl) {
+    public void createOrUpdateBank(CustomRestApiReqPo customRestApiReqPo) {
         log.info("Start of createOrUpdateBank Method in service ###");
 
         List<CrCreateBankBranchErrors> banksErrorsLi = new ArrayList<>();
@@ -613,7 +611,7 @@ public class CrCldImportCustomRestApisServiceImpl {
                 stmtA.setString(1, customRestApiReqPo.getBatchName());
 
                 try (ResultSet resultSetA = stmtA.executeQuery()) {
-                    List<CrBanksResPo> banksList = getAllCashBanks(headers, cloudUrl);
+                    List<CrBanksResPo> banksList = getAllCashBanks(headers, customRestApiReqPo);
                     Set<Long> bankPartyIds = banksList.stream()
                             .map(CrBanksResPo::getBankPartyId)
                             .collect(Collectors.toSet());
@@ -770,15 +768,15 @@ public class CrCldImportCustomRestApisServiceImpl {
     }
 
 
-    private List<CrBanksResPo> getAllCashBanks(HttpHeaders headers, String cldUrl) {
+    private List<CrBanksResPo> getAllCashBanks(HttpHeaders headers, CustomRestApiReqPo customRestApiReqPo) {
         RestTemplate restTemplate = new RestTemplate();
         try {
             // Validate and sanitize the base URL
-//            String baseUrl = validateAndSanitizeUrl(cldUrl);
+            String baseUrl = validateAndSanitizeUrl(customRestApiReqPo.getCloudUrl());
             String branchPath = sanitizePath(bankCloudUrl);
 
             // Construct the complete URL safely
-            URI uri = UriComponentsBuilder.fromHttpUrl(cldUrl)
+            URI uri = UriComponentsBuilder.fromHttpUrl(baseUrl)
                     .path(branchPath)
                     .build()
                     .toUri();
@@ -861,35 +859,14 @@ public class CrCldImportCustomRestApisServiceImpl {
     }
 
     private String validateAndSanitizeUrl(String url) {
-        // Check for null or blank input
-        if (url == null || url.isBlank()) {
-            throw new IllegalArgumentException("URL cannot be null or blank");
-        }
-
         try {
             URI uri = new URI(url);
-
-            // Allow only HTTPS protocol
             if (!"https".equalsIgnoreCase(uri.getScheme())) {
-                throw new IllegalArgumentException("Only HTTPS URLs are allowed: " + url);
+                throw new IllegalArgumentException("Invalid or unsafe URL: " + url);
             }
-
-            // Validate the host to prevent internal/private IP access
-            validateIpAddress(uri.getHost());
-
             return uri.toString();
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Malformed URL: " + url, e);
-        }
-    }
-    private void validateIpAddress(String host) {
-        try {
-            InetAddress inetAddress = InetAddress.getByName(host);
-            if (inetAddress.isAnyLocalAddress() || inetAddress.isLoopbackAddress() || inetAddress.isSiteLocalAddress()) {
-                throw new IllegalArgumentException("Access to internal or private IP addresses is not allowed: " + host);
-            }
-        } catch (UnknownHostException e) {
-            throw new IllegalArgumentException("Invalid host: " + host, e);
         }
     }
 
