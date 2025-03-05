@@ -498,34 +498,94 @@ public class CrCustomTableServiceImpl implements CrCustomTableService {
     }
 
     @Override
+//    public void getCustmTblRecsByBatchName(GetCustomTableRecordsReqPo custmTableReqPo, HttpServletResponse response, PrintWriter writer, HttpServletRequest request) throws Exception {
+//        ResultSet rs = null;
+//        Connection con = null;
+//        String batchName = custmTableReqPo.getCrBatchName();
+//        String respType = custmTableReqPo.getResponseType();
+//        String tableName = custmTableReqPo.getCustomTableName();
+//        PreparedStatement stmt = null;
+//        boolean isJsonResp = "JSON".equalsIgnoreCase(respType);
+//        try {
+//            // count of Records
+//            if (isJsonResp) {
+//                Object count = getRecCountOfCustomTbl(tableName, batchName);
+//                log.info("count--> {} ", count);
+//                response.setHeader("count", String.valueOf(count));
+//            }
+//            String sql = sqlQueryofCustTable(isJsonResp, tableName);
+//            log.info("sql--> {} ", sql);
+//            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(request.getHeader("X-Tenant-Id"));
+//            stmt = con.prepareStatement(sql);
+//            stmt.setString(1, batchName);
+//            if (isJsonResp) {
+//                stmt.setLong(2, custmTableReqPo.getPageNo());
+//                stmt.setLong(3, custmTableReqPo.getPageSize());
+//                stmt.setLong(4, custmTableReqPo.getPageNo());
+//                stmt.setLong(5, custmTableReqPo.getPageSize());
+//            }
+//            stmt.setFetchSize(50000);
+//            rs = stmt.executeQuery();
+//            if (isJsonResp) {
+//                processResultSetAsJson(rs, response, writer);
+//            } else if ("CSV".equalsIgnoreCase(respType)) {
+//                processResultSetAsCSV(rs, writer);
+//            } else {
+//                throw new IllegalArgumentException("Unsupported type: " + respType);
+//            }
+//        } finally {
+//            if (rs != null) {
+//                rs.close();
+//            }
+//            if (stmt != null) {
+//                stmt.close();
+//            }
+//            if (con != null) {
+//                con.close();
+//            }
+//        }
+//    }
     public void getCustmTblRecsByBatchName(GetCustomTableRecordsReqPo custmTableReqPo, HttpServletResponse response, PrintWriter writer, HttpServletRequest request) throws Exception {
         ResultSet rs = null;
         Connection con = null;
+        PreparedStatement stmt = null;
+
         String batchName = custmTableReqPo.getCrBatchName();
         String respType = custmTableReqPo.getResponseType();
         String tableName = custmTableReqPo.getCustomTableName();
-        PreparedStatement stmt = null;
         boolean isJsonResp = "JSON".equalsIgnoreCase(respType);
+
         try {
-            // count of Records
+            // Count of Records
             if (isJsonResp) {
                 Object count = getRecCountOfCustomTbl(tableName, batchName);
                 log.info("count--> {} ", count);
-                response.setHeader("count", String.valueOf(count));
+
+                // Sanitize the count value to prevent HTTP response splitting
+                String sanitizedCount = count.toString().replaceAll("[^0-9]", "");
+                response.setHeader("count", sanitizedCount);
             }
+
+            // Build SQL query
             String sql = sqlQueryofCustTable(isJsonResp, tableName);
             log.info("sql--> {} ", sql);
+
+            // Get connection
             con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(request.getHeader("X-Tenant-Id"));
             stmt = con.prepareStatement(sql);
             stmt.setString(1, batchName);
+
             if (isJsonResp) {
                 stmt.setLong(2, custmTableReqPo.getPageNo());
                 stmt.setLong(3, custmTableReqPo.getPageSize());
                 stmt.setLong(4, custmTableReqPo.getPageNo());
                 stmt.setLong(5, custmTableReqPo.getPageSize());
             }
+
             stmt.setFetchSize(50000);
             rs = stmt.executeQuery();
+
+            // Process results
             if (isJsonResp) {
                 processResultSetAsJson(rs, response, writer);
             } else if ("CSV".equalsIgnoreCase(respType)) {
@@ -534,15 +594,10 @@ public class CrCustomTableServiceImpl implements CrCustomTableService {
                 throw new IllegalArgumentException("Unsupported type: " + respType);
             }
         } finally {
-            if (rs != null) {
-                rs.close();
-            }
-            if (stmt != null) {
-                stmt.close();
-            }
-            if (con != null) {
-                con.close();
-            }
+            // Close resources safely
+            if (rs != null) try { rs.close(); } catch (Exception ignored) {}
+            if (stmt != null) try { stmt.close(); } catch (Exception ignored) {}
+            if (con != null) try { con.close(); } catch (Exception ignored) {}
         }
     }
 
