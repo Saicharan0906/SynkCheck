@@ -529,7 +529,7 @@ public class CrEbsConnectionServiceImpl {
 
             try (ResultSet rs = stmnt.executeQuery()) {
                 if (rs.next()) {
-                    String rawQuery = rs.getString("info_value");
+                    String rawQuery = rs.getString("info_value").replaceAll("'", "''");
                     ebsQuery = sanitizeQuery(rawQuery);
                 }
             }
