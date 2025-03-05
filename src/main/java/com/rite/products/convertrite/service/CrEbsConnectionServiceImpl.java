@@ -484,37 +484,66 @@ public class CrEbsConnectionServiceImpl {
         }
     }
 
+    //    private String getEbsQuery(Long objectId, String connectionType) throws Exception {
+//        Connection con = null;
+//        PreparedStatement stmnt = null;
+//        ResultSet rs = null;
+//        String ebsQuery = null;
+//        try {
+//            con = masterDataSource.getConnection();
+//            String query = "";
+//            if ("Azure".equalsIgnoreCase(connectionType)) {
+//                query = "select info_value from cr_object_information where object_id=? and info_type='AZURE_EXTRACTION_QUERY' ";
+//            } else {
+//                query = "select info_value from cr_object_information where object_id=? and info_type='SQL_EXTRACTION_QUERY' ";
+//
+//            }
+//            // create Prepared Statement
+//            stmnt = con.prepareStatement(query);
+//            stmnt.setLong(1, objectId);
+//            rs = stmnt.executeQuery();
+//            if (rs.next())
+//                ebsQuery = rs.getString("info_value");
+//
+//        } finally {
+//            if (rs != null)
+//                rs.close();
+//            if (stmnt != null)
+//                stmnt.close();
+//            if (con != null)
+//                con.close();
+//        }
+//        return ebsQuery;
+//    }
     private String getEbsQuery(Long objectId, String connectionType) throws Exception {
-        Connection con = null;
-        PreparedStatement stmnt = null;
-        ResultSet rs = null;
         String ebsQuery = null;
-        try {
-            con = masterDataSource.getConnection();
-            String query = "";
-            if ("Azure".equalsIgnoreCase(connectionType)) {
-                query = "select info_value from cr_object_information where object_id=? and info_type='AZURE_EXTRACTION_QUERY' ";
-            } else {
-                query = "select info_value from cr_object_information where object_id=? and info_type='SQL_EXTRACTION_QUERY' ";
+        String query = "SELECT info_value FROM cr_object_information WHERE object_id=? AND info_type=?";
 
-            }
-            // create Prepared Statement
-            stmnt = con.prepareStatement(query);
+        String infoType = "Azure".equalsIgnoreCase(connectionType) ? "AZURE_EXTRACTION_QUERY" : "SQL_EXTRACTION_QUERY";
+
+        try (Connection con = masterDataSource.getConnection();
+             PreparedStatement stmnt = con.prepareStatement(query)) {
+
             stmnt.setLong(1, objectId);
-            rs = stmnt.executeQuery();
-            if (rs.next())
-                ebsQuery = rs.getString("info_value");
+            stmnt.setString(2, infoType);
 
-        } finally {
-            if (rs != null)
-                rs.close();
-            if (stmnt != null)
-                stmnt.close();
-            if (con != null)
-                con.close();
+            try (ResultSet rs = stmnt.executeQuery()) {
+                if (rs.next()) {
+                    ebsQuery = rs.getString("info_value");
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Error fetching EBS query for objectId: {} and connectionType: {} - {}", objectId, connectionType, e.getMessage(), e);
+            throw e;
         }
+
+        if (ebsQuery == null || ebsQuery.trim().isEmpty()) {
+            log.warn("EBS Query not found for objectId: {} and connectionType: {}", objectId, connectionType);
+        }
+
         return ebsQuery;
     }
+
 
     public BasicResponsePo loadSrcDataFromEbs(CrLoadDataFromEbsReqPo crLoadDataFromEbsReqPo, HttpServletRequest request)
             throws Exception {
@@ -914,6 +943,7 @@ public class CrEbsConnectionServiceImpl {
         }
         return ebsQuery;
     }
+
     private void validateLoadMetaDataRequest(CrLoadMetaDataFromEbsReqPo request) throws ValidationException {
         if (request.getObjectId() == null) {
             throw new ValidationException("ObjectId cannot be null");
