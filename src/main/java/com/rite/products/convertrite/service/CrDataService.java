@@ -216,7 +216,7 @@ public class CrDataService {
 
     public void onScheduledJob(String tenantId) {
         log.debug("tenantId-->" + tenantId);
-        List<CrCloudJobStatus> jobStatusLi = crCloudJobStatusRepo.findByJobStatus(Status.PROCESSING.getStatus());        
+        List<CrCloudJobStatus> jobStatusLi = crCloudJobStatusRepo.findByJobStatus(Status.PROCESSING.getStatus());
         for (CrCloudJobStatus crCloudStatus : jobStatusLi) {
             Long loadRequestId = crCloudStatus.getLoadRequestId();
             log.info("loadRequestId-->" + loadRequestId);
@@ -474,82 +474,165 @@ public class CrDataService {
         getSourceRecords(getSourceRecords, recordsPostJobExecutionPo.getSourceTableName(), response, request);
     }
 
-    public void getSourceRecords(GetSourceRecords getSourceRecords, String tableName, HttpServletResponse response, HttpServletRequest request) throws Exception {
-        ResultSet rs = null;
-        Connection con = null;
-        PrintWriter writer = response.getWriter();
-        String status = getSourceRecords.getStatus();
-        String batchName = getSourceRecords.getBatchName();
-        String type = getSourceRecords.getType();
-        PreparedStatement stmt = null;
-        try {
-            // count of Records
-            if (getSourceRecords.getType().equals("JSON")) {
-                StringBuilder countSqlBuilder = new StringBuilder(
-                        "SELECT count(*) FROM " + tableName + " where CR_BATCH_NAME='" + batchName + "'");
-                if (status != null && !status.isBlank() && !status.equalsIgnoreCase("all")) {
-                    countSqlBuilder.append("  and VALIDATION_FLAG in(" + "'").append(status).append("')");
-                }
-                Query countQuery = entityManager.createNativeQuery(countSqlBuilder.toString());
-                Object count = countQuery.getSingleResult();
-                log.info(count + "count:::::::::");
-                response.setHeader("count", String.valueOf(count));
-            }
-            StringBuilder sqlBuilder = new StringBuilder();
-            if (getSourceRecords.getType().equals("JSON"))
-                sqlBuilder.append("select * from (");
-            sqlBuilder.append(" select a.* ");
-            if (getSourceRecords.getType().equals("JSON"))
-                sqlBuilder.append(", rownum r_");
-            sqlBuilder.append(" from ").append(tableName).append(" a where a.CR_BATCH_NAME='").append(batchName).append("'");
-            if (status != null && !status.isBlank() && !status.equalsIgnoreCase("all")) {
-                sqlBuilder.append("  and a.VALIDATION_FLAG in(" + "'").append(status).append("')");
-            }
-            if (getSourceRecords.getType().equals("JSON")) {
-                sqlBuilder.append("  and rownum < ((").append(getSourceRecords.getPageNo()).append("*").append(getSourceRecords.getPageSize()).append(")+1)");
-                sqlBuilder.append(" ) WHERE r_ >= (((").append(getSourceRecords.getPageNo()).append("- 1)*").append(getSourceRecords.getPageSize()).append(")+1)");
-            }
-
-            String sql = sqlBuilder.toString();
-            log.info(sql);
-            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(request.getHeader("X-Tenant-Id"));
-
-            stmt = con.prepareStatement(sql);
-//            stmt.setString(1, batchName);
+//    public void getSourceRecords(GetSourceRecords getSourceRecords, String tableName, HttpServletResponse response, HttpServletRequest request) throws Exception {
+//        ResultSet rs = null;
+//        Connection con = null;
+//        PrintWriter writer = response.getWriter();
+//        String status = getSourceRecords.getStatus();
+//        String batchName = getSourceRecords.getBatchName();
+//        String type = getSourceRecords.getType();
+//        PreparedStatement stmt = null;
+//        try {
+//            // count of Records
+//            if (getSourceRecords.getType().equals("JSON")) {
+//                StringBuilder countSqlBuilder = new StringBuilder(
+//                        "SELECT count(*) FROM " + tableName + " where CR_BATCH_NAME='" + batchName + "'");
+//                if (status != null && !status.isBlank() && !status.equalsIgnoreCase("all")) {
+//                    countSqlBuilder.append("  and VALIDATION_FLAG in(" + "'").append(status).append("')");
+//                }
+//                Query countQuery = entityManager.createNativeQuery(countSqlBuilder.toString());
+//                Object count = countQuery.getSingleResult();
+//                log.info(count + "count:::::::::");
+//                response.setHeader("count", String.valueOf(count));
+//            }
+//            StringBuilder sqlBuilder = new StringBuilder();
+//            if (getSourceRecords.getType().equals("JSON"))
+//                sqlBuilder.append("select * from (");
+//            sqlBuilder.append(" select a.* ");
+//            if (getSourceRecords.getType().equals("JSON"))
+//                sqlBuilder.append(", rownum r_");
+//            sqlBuilder.append(" from ").append(tableName).append(" a where a.CR_BATCH_NAME='").append(batchName).append("'");
 //            if (status != null && !status.isBlank() && !status.equalsIgnoreCase("all")) {
-//                stmt.setString(2, status);
+//                sqlBuilder.append("  and a.VALIDATION_FLAG in(" + "'").append(status).append("')");
 //            }
-//            if ("JSON".equals(getSourceRecords.getType())) {
-//                stmt.setLong(3, getSourceRecords.getPageNo());
-//                stmt.setLong(4, getSourceRecords.getPageSize());
-//                stmt.setLong(5, getSourceRecords.getPageNo());
-//                stmt.setLong(6, getSourceRecords.getPageSize());
+//            if (getSourceRecords.getType().equals("JSON")) {
+//                sqlBuilder.append("  and rownum < ((").append(getSourceRecords.getPageNo()).append("*").append(getSourceRecords.getPageSize()).append(")+1)");
+//                sqlBuilder.append(" ) WHERE r_ >= (((").append(getSourceRecords.getPageNo()).append("- 1)*").append(getSourceRecords.getPageSize()).append(")+1)");
 //            }
-            stmt.setFetchSize(50000);
-            rs = stmt.executeQuery();
+//
+//            String sql = sqlBuilder.toString();
+//            log.info(sql);
+//            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(request.getHeader("X-Tenant-Id"));
+//
+//            stmt = con.prepareStatement(sql);
+////            stmt.setString(1, batchName);
+////            if (status != null && !status.isBlank() && !status.equalsIgnoreCase("all")) {
+////                stmt.setString(2, status);
+////            }
+////            if ("JSON".equals(getSourceRecords.getType())) {
+////                stmt.setLong(3, getSourceRecords.getPageNo());
+////                stmt.setLong(4, getSourceRecords.getPageSize());
+////                stmt.setLong(5, getSourceRecords.getPageNo());
+////                stmt.setLong(6, getSourceRecords.getPageSize());
+////            }
+//            stmt.setFetchSize(50000);
+//            rs = stmt.executeQuery();
+//
+//            if ("JSON".equalsIgnoreCase(type)) {
+//                processResultSetAsJson(rs, response, writer);
+//            } else if ("CSV".equalsIgnoreCase(type)) {
+//                processResultSetAsCSV(rs, writer);
+//            } else {
+//                throw new IllegalArgumentException("Unsupported type: " + type);
+//            }
+//        } finally {
+//            if (writer != null) {
+//                writer.close();
+//            }
+//            if (rs != null) {
+//                rs.close();
+//            }
+//            if (stmt != null) {
+//                stmt.close();
+//            }
+//            if (con != null) {
+//                con.close();
+//            }
+//        }
+//    }
+public void getSourceRecords(GetSourceRecords getSourceRecords, String tableName, HttpServletResponse response, HttpServletRequest request) throws Exception {
+    ResultSet rs = null;
+    Connection con = null;
+    PreparedStatement stmt = null;
 
-            if ("JSON".equalsIgnoreCase(type)) {
-                processResultSetAsJson(rs, response, writer);
-            } else if ("CSV".equalsIgnoreCase(type)) {
-                processResultSetAsCSV(rs, writer);
-            } else {
-                throw new IllegalArgumentException("Unsupported type: " + type);
+    String status = getSourceRecords.getStatus();
+    String batchName = getSourceRecords.getBatchName();
+    String type = getSourceRecords.getType();
+
+    try (PrintWriter writer = response.getWriter()) {
+        // Count of Records
+        if ("JSON".equalsIgnoreCase(type)) {
+            StringBuilder countSqlBuilder = new StringBuilder(
+                    "SELECT COUNT(*) FROM " + tableName + " WHERE CR_BATCH_NAME = ?"
+            );
+            if (status != null && !status.isBlank() && !"all".equalsIgnoreCase(status)) {
+                countSqlBuilder.append(" AND VALIDATION_FLAG = ?");
             }
-        } finally {
-            if (writer != null) {
-                writer.close();
+
+            Query countQuery = entityManager.createNativeQuery(countSqlBuilder.toString());
+            countQuery.setParameter(1, batchName);
+            if (status != null && !status.isBlank() && !"all".equalsIgnoreCase(status)) {
+                countQuery.setParameter(2, status);
             }
-            if (rs != null) {
-                rs.close();
-            }
-            if (stmt != null) {
-                stmt.close();
-            }
-            if (con != null) {
-                con.close();
-            }
+
+            Object count = countQuery.getSingleResult();
+            String sanitizedCount = count.toString().replaceAll("[^0-9]", ""); // Prevents HTTP response splitting
+            response.setHeader("count", sanitizedCount);
         }
+
+        // Build main query
+        StringBuilder sqlBuilder = new StringBuilder();
+        if ("JSON".equalsIgnoreCase(type)) {
+            sqlBuilder.append("SELECT * FROM (");
+        }
+        sqlBuilder.append(" SELECT a.* ");
+        if ("JSON".equalsIgnoreCase(type)) {
+            sqlBuilder.append(", ROWNUM r_");
+        }
+        sqlBuilder.append(" FROM ").append(tableName).append(" a WHERE a.CR_BATCH_NAME = ?");
+        if (status != null && !status.isBlank() && !"all".equalsIgnoreCase(status)) {
+            sqlBuilder.append(" AND a.VALIDATION_FLAG = ?");
+        }
+        if ("JSON".equalsIgnoreCase(type)) {
+            sqlBuilder.append(" AND ROWNUM < ((? * ?) + 1)) WHERE r_ >= (((? - 1) * ?) + 1)");
+        }
+
+        log.info("Executing SQL: " + sqlBuilder);
+
+        // Get connection
+        con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(request.getHeader("X-Tenant-Id"));
+        stmt = con.prepareStatement(sqlBuilder.toString());
+        stmt.setString(1, batchName);
+        int paramIndex = 2;
+        if (status != null && !status.isBlank() && !"all".equalsIgnoreCase(status)) {
+            stmt.setString(paramIndex++, status);
+        }
+        if ("JSON".equalsIgnoreCase(type)) {
+            stmt.setLong(paramIndex++, getSourceRecords.getPageNo());
+            stmt.setLong(paramIndex++, getSourceRecords.getPageSize());
+            stmt.setLong(paramIndex++, getSourceRecords.getPageNo());
+            stmt.setLong(paramIndex++, getSourceRecords.getPageSize());
+        }
+
+        stmt.setFetchSize(50000);
+        rs = stmt.executeQuery();
+
+        // Process results
+        if ("JSON".equalsIgnoreCase(type)) {
+            processResultSetAsJson(rs, response, writer);
+        } else if ("CSV".equalsIgnoreCase(type)) {
+            processResultSetAsCSV(rs, writer);
+        } else {
+            throw new IllegalArgumentException("Unsupported type: " + type);
+        }
+    } finally {
+        // Close resources safely
+        if (rs != null) try { rs.close(); } catch (Exception ignored) {}
+        if (stmt != null) try { stmt.close(); } catch (Exception ignored) {}
+        if (con != null) try { con.close(); } catch (Exception ignored) {}
     }
+}
+
 
 
     // Get records from Cloud Staging table based on the batch name and status requested
