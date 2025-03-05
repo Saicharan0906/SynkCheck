@@ -71,7 +71,7 @@ public class CrCustomTablesController {
             @ApiResponse(code = 500, message = "Server Side Error"),
             @ApiResponse(code = 400, message = "Bad Request")})
     @PostMapping("/loaddatatocustomtable")
-    public ResponseEntity<BasicResponsePo> loadDataToCustomTable(@RequestBody LoadCustomDataReqPo loadCustomDataReqPo,
+    public ResponseEntity<BasicResponsePo> loadDataToCustomTable(@RequestBody @Valid LoadCustomDataReqPo loadCustomDataReqPo,
                                                                  HttpServletRequest request) throws Exception {
         return new ResponseEntity<BasicResponsePo>(crCustomTableService.loadDataToCustomTable(loadCustomDataReqPo, request), HttpStatus.OK);
     }
