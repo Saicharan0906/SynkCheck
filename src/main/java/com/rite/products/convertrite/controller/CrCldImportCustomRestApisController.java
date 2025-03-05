@@ -88,7 +88,7 @@ public class CrCldImportCustomRestApisController {
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful Response"),
             @ApiResponse(code = 500, message = "Server Side Error")})
     @PostMapping("/validateccid")
-    public ResponseEntity<?> validateCcid(@RequestBody CustomRestApiReqPo customRestApiReqPo)
+    public ResponseEntity<?> validateCcid(@RequestBody @Valid CustomRestApiReqPo customRestApiReqPo)
             throws Exception {
 
         String ccidColumn = validateColumnName(customRestApiReqPo.getCcidColumnName());
@@ -110,7 +110,7 @@ public class CrCldImportCustomRestApisController {
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful Response"),
             @ApiResponse(code = 500, message = "Server Side Error")})
     @PostMapping("/update/{updateType}")
-    public ResponseEntity<?> updateCldStagingTable(@PathVariable String updateType, @RequestBody CustomRestApiReqPo customRestApiReqPo)
+    public ResponseEntity<?> updateCldStagingTable(@PathVariable String updateType, @RequestBody @Valid CustomRestApiReqPo customRestApiReqPo)
             throws Exception {
         cldImportCustomRestApisServiceImpl.updateCldStagingTable(updateType, customRestApiReqPo);
         return new ResponseEntity<String>("successful", HttpStatus.OK);
