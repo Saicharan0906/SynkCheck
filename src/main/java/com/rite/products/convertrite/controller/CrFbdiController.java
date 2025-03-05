@@ -10,6 +10,7 @@ import com.rite.products.convertrite.service.CrFbdiService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import javax.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -67,23 +68,52 @@ public class CrFbdiController {
                 HttpStatus.OK);
 
     }
-    @ApiOperation(value = "This Api returns fbdi column sequence")
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Successful Response"),
-            @ApiResponse(code = 500, message = "Server Side Error") })
+//    @ApiOperation(value = "This Api returns fbdi column sequence")
+//    @ApiResponses(value = { @ApiResponse(code = 200, message = "Successful Response"),
+//            @ApiResponse(code = 500, message = "Server Side Error") })
+//    @GetMapping("/getfbdicolsequence")
+//    public ResponseEntity<?> getFbdiColumnSequence(@RequestParam("fileName") String fileName,
+//                                                                            @RequestParam("version") String version, HttpServletResponse response) throws ConvertRiteException {
+//        log.info("Start of getFbdiColumnSequence Method in Controller ###");
+//        List<FbdiColumnSequencePo> columnSequence = new ArrayList<>();
+//        try {
+//            columnSequence = crFbdiService.getFbdiColumnSequence(fileName, version, response);
+//        } catch (Exception e) {
+//            log.error(e.getMessage());
+//            return new ResponseEntity<>(e.getCause(), HttpStatus.EXPECTATION_FAILED);
+//        }
+//        return new ResponseEntity<List<FbdiColumnSequencePo>>(columnSequence, new HttpHeaders(), HttpStatus.OK);
+//
+//    }
+
+    @ApiOperation(value = "This API returns FBDI column sequence")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successful Response"),
+            @ApiResponse(code = 500, message = "Server Side Error")
+    })
     @GetMapping("/getfbdicolsequence")
-    public ResponseEntity<?> getFbdiColumnSequence(@RequestParam("fileName") String fileName,
-                                                                            @RequestParam("version") String version, HttpServletResponse response) throws ConvertRiteException {
+    public ResponseEntity<?> getFbdiColumnSequence(
+            @RequestParam("fileName")
+            @Pattern(regexp = "^[a-zA-Z0-9_.-]+$", message = "Invalid file name") String fileName,
+
+            @RequestParam("version")
+            @Pattern(regexp = "^[a-zA-Z0-9_.-]+$", message = "Invalid version format") String version,
+
+            HttpServletResponse response) throws ConvertRiteException {
+
         log.info("Start of getFbdiColumnSequence Method in Controller ###");
-        List<FbdiColumnSequencePo> columnSequence = new ArrayList<>();
+
+        List<FbdiColumnSequencePo> columnSequence;
         try {
             columnSequence = crFbdiService.getFbdiColumnSequence(fileName, version, response);
         } catch (Exception e) {
             log.error(e.getMessage());
-            return new ResponseEntity<>(e.getCause(), HttpStatus.EXPECTATION_FAILED);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.EXPECTATION_FAILED);
         }
-        return new ResponseEntity<List<FbdiColumnSequencePo>>(columnSequence, new HttpHeaders(), HttpStatus.OK);
 
+        return new ResponseEntity<>(columnSequence, HttpStatus.OK);
     }
+
 
     @ApiOperation(value = "This Api is to save fbditemplate columns")
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Successful Response"),
