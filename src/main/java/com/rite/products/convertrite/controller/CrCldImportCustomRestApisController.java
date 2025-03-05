@@ -13,6 +13,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.Set;
+import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,10 +45,10 @@ public class CrCldImportCustomRestApisController {
     @ApiOperation(value = "This api is for creating banks")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Successful Response"), @ApiResponse(code = 500, message = "Server Side Error"), @ApiResponse(code = 400, message = "Bad Request")})
     @PostMapping("/createbank")
-    public ResponseEntity<?> createOrUpdateBank(@RequestBody CustomRestApiReqPo customRestApiReqPo) throws Exception {
+    public ResponseEntity<?> createOrUpdateBank(@RequestBody @Valid CustomRestApiReqPo customRestApiReqPo) throws Exception {
         // Validate and sanitize the input at the controller level
-       String cloudUrl = validateAndSanitizeInput(customRestApiReqPo);
-        cldImportCustomRestApisServiceImpl.createOrUpdateBank(customRestApiReqPo,cloudUrl);
+         String cloudUrl = validateAndSanitizeInput(customRestApiReqPo);
+        cldImportCustomRestApisServiceImpl.createOrUpdateBank(customRestApiReqPo);
         return new ResponseEntity<>("successful", HttpStatus.OK);
     }
 
