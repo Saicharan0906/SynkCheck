@@ -3,6 +3,7 @@ package com.rite.products.convertrite.controller;
 import com.rite.products.convertrite.Validations.Validations;
 import com.rite.products.convertrite.exception.BadRequestException;
 import com.rite.products.convertrite.exception.ConvertRiteException;
+import com.rite.products.convertrite.exception.ValidationException;
 import com.rite.products.convertrite.model.CrProcessRequestsView;
 import com.rite.products.convertrite.po.*;
 import com.rite.products.convertrite.service.CrConversionService;
@@ -110,10 +111,36 @@ public class CrConversionController {
 		}
 		return new ResponseEntity<ProcessJobPo>(processJobPo, new HttpHeaders(), HttpStatus.OK);
 	}
-	@ApiOperation(value = "This Api is to Transform the Data to Cloud")
+	@ApiOperation(value = "This API is to Transform the Data to Cloud")
 	@PostMapping("/transformDataToCloud")
-	public ResponseEntity<Object> transformDataToCloud(@RequestParam("cloudTemplateName") String cloudTemplateName, @RequestParam("pReprocessFlag") String pReprocessFlag, @RequestParam("pBatchFlag") String pBatchFlag, @RequestParam("pBatchName") String pBatchName,HttpServletRequest request ) throws Exception{
-		return  crConversionService.transformDataToCloud(cloudTemplateName,pReprocessFlag, pBatchFlag,pBatchName,request);
+	public ResponseEntity<Object> transformDataToCloud(
+			@RequestParam("cloudTemplateName") String cloudTemplateName,
+			@RequestParam("pReprocessFlag") String pReprocessFlag,
+			@RequestParam("pBatchFlag") String pBatchFlag,
+			@RequestParam("pBatchName") String pBatchName,
+			HttpServletRequest request) throws Exception {
+
+		// Validate input parameters
+		if (Validations.isNullOrEmptyorWhiteSpace(cloudTemplateName)) {
+			throw new ValidationException("Cloud Template Name cannot be empty.");
+		}
+		if (Validations.isNullOrEmptyorWhiteSpace(pReprocessFlag)) {
+			throw new ValidationException("Reprocess Flag cannot be empty.");
+		}
+		if (Validations.isNullOrEmptyorWhiteSpace(pBatchFlag)) {
+			throw new ValidationException("Batch Flag cannot be empty.");
+		}
+		if (Validations.isNullOrEmptyorWhiteSpace(pBatchName)) {
+			throw new ValidationException("Batch Name cannot be empty.");
+		}
+		if (Validations.isNullOrEmptyorWhiteSpace(request.getHeader("X-TENANT-ID"))) {
+			throw new ValidationException("X-TENANT-ID header is required.");
+		}
+		if (Validations.isNullOrEmptyorWhiteSpace(request.getHeader("Authorization"))) {
+			throw new ValidationException("Authorization header is required.");
+		}
+
+		return crConversionService.transformDataToCloud(cloudTemplateName, pReprocessFlag, pBatchFlag, pBatchName, request);
 	}
 	@ApiOperation(value = "This Api is for downloading fbdi from ftp")
 	@GetMapping("/downloadfbdi")
