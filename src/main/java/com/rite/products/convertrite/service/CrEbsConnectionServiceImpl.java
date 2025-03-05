@@ -314,8 +314,11 @@ public class CrEbsConnectionServiceImpl {
             //If DBLink is enabled then get metadata using DBLink else use EBS jdbc connection
             if (dbLinkEnabled) {
                 stmnt = con.prepareStatement(ebsQuery);
-                rs = stmnt.executeQuery();
-                rsmd = rs.getMetaData();
+                boolean isResultSet = stmnt.execute();
+                if (isResultSet) {
+                    rs = stmnt.getResultSet();
+                    rsmd = rs.getMetaData();
+                }
             } else {
                 stmnt = ebsCon.prepareStatement(ebsQuery);
                 rs = stmnt.executeQuery();
