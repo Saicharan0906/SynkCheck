@@ -204,8 +204,8 @@ public class CrFbdiServiceImpl implements CrFbdiService {
         log.info("Start of downloadFbdiTemplateFromServer Method ###");
 
         // Validate input parameters
-        if (!isValidInput(fileName) || !isValidInput(version)) {
-            throw new IllegalArgumentException("Invalid fileName or version input");
+        if (!isValidFileName(fileName) || !isValidFileName(version)) {
+            throw new IllegalArgumentException("Invalid file name or version input");
         }
 
         // Construct and validate the URL
@@ -239,6 +239,11 @@ public class CrFbdiServiceImpl implements CrFbdiService {
         return target;
     }
 
+    private boolean isValidFileName(String fileName) {
+        return fileName != null
+                && fileName.matches("^[a-zA-Z0-9_.-]+$")
+                && !fileName.contains("..");
+    }
     // Validate input to prevent path traversal
     private boolean isValidInput(String input) {
         return input != null && input.matches("^[a-zA-Z0-9_.-]+$") && !input.contains("..");
