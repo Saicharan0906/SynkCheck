@@ -247,7 +247,7 @@ public class CrConversionServiceImpl implements CrConversionService {
         customRestApiReqPo.setCcidColumnName(objectInfos.get("CCID Column Name"));
         customRestApiReqPo.setLedgerColumnName(objectInfos.get("Ledger Column Name"));
         customRestApiReqPo.setCloudUrl(crObjectInformationPo.getCloudLoginDetails().get(0).getUrl());
-        customRestApiReqPo.setRestApiUrl(crUserHookResPo.getHookText());
+        customRestApiReqPo.setRestApiUrl(restApiUrl);
         customRestApiReqPo.setRequestId(requestId);
 
         validateAndCallUserHook(customRestApiReqPo);
