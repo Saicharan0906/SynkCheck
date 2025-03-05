@@ -669,38 +669,89 @@ public class CrEbsConnectionServiceImpl {
     }
 
 
-    private int insertEbsSourceDataWithDBLink(CrLoadDataFromEbsReqPo crLoadDataFromEbsReqPo, CrSourceTemplateHeadersView crSourceTemplateHeaders, Connection conn, String srcStagingTable, Long srcTemplateId, CrEbsConnectionDetails ebsDtlsWithConnectnName) throws Exception {
+//    private int insertEbsSourceDataWithDBLink(CrLoadDataFromEbsReqPo crLoadDataFromEbsReqPo, CrSourceTemplateHeadersView crSourceTemplateHeaders, Connection conn, String srcStagingTable, Long srcTemplateId, CrEbsConnectionDetails ebsDtlsWithConnectnName) throws Exception {
+//        log.info("Start of EBS source data insertion using DBLink.");
+//        StopWatch watch = new StopWatch();
+//        watch.start();
+//
+//        PreparedStatement stmnt = null;
+//
+//        // Retrieve Ebs View query
+//        String ebsQuery = replaceEbsQueryWithDbLink(crSourceTemplateHeaders.getObjectId(),
+//                crLoadDataFromEbsReqPo.getConnectionName(), ebsDtlsWithConnectnName.getConnectionType());
+//        //replace bind variables
+//        ebsQuery = replaceWithBindVals(ebsQuery, crLoadDataFromEbsReqPo);
+//        log.info("ebsQuery bind" + ebsQuery);
+//        // Inserting data into staging table
+//        StringBuffer sb = new StringBuffer("INSERT INTO " + srcStagingTable + "   SELECT '" + srcTemplateId
+//                + "',NULL,NULL,ROWNUM,b.* ,ROWNUM,'" + crLoadDataFromEbsReqPo.getBatchName() + "' FROM ( ");
+//        sb.append(ebsQuery);
+//        sb.append(") b");
+//        String sqlQuery = sb.toString();
+//        log.info("SQL Query to insert data into EBS source staging table: " + sqlQuery);
+//        int count = 0;
+//        try {
+//            // create Prepared Statement
+//            stmnt = conn.prepareStatement(sqlQuery);
+//            count = stmnt.executeUpdate();
+//        } catch (SQLException e) {
+//            log.error("Rolling back ebs data inserts due to SQL exception: " + e.getMessage());
+//            throw e;
+//        } finally {
+//            if (stmnt != null)
+//                stmnt.close();
+//        }
+//        watch.stop();
+//        log.info("EBS source data insertion using DBLink completed in " + watch.getTotalTimeSeconds() + " seconds");
+//        return count;
+//    }
+
+    private int insertEbsSourceDataWithDBLink(CrLoadDataFromEbsReqPo crLoadDataFromEbsReqPo,
+                                              CrSourceTemplateHeadersView crSourceTemplateHeaders,
+                                              Connection conn, String srcStagingTable,
+                                              Long srcTemplateId,
+                                              CrEbsConnectionDetails ebsDtlsWithConnectnName) throws Exception {
         log.info("Start of EBS source data insertion using DBLink.");
         StopWatch watch = new StopWatch();
         watch.start();
 
         PreparedStatement stmnt = null;
 
-        // Retrieve Ebs View query
+        // Retrieve EBS View query safely
         String ebsQuery = replaceEbsQueryWithDbLink(crSourceTemplateHeaders.getObjectId(),
                 crLoadDataFromEbsReqPo.getConnectionName(), ebsDtlsWithConnectnName.getConnectionType());
-        //replace bind variables
+
+        // Ensure the query does not contain malicious input
         ebsQuery = replaceWithBindVals(ebsQuery, crLoadDataFromEbsReqPo);
-        log.info("ebsQuery bind" + ebsQuery);
-        // Inserting data into staging table
-        StringBuffer sb = new StringBuffer("INSERT INTO " + srcStagingTable + "   SELECT '" + srcTemplateId
-                + "',NULL,NULL,ROWNUM,b.* ,ROWNUM,'" + crLoadDataFromEbsReqPo.getBatchName() + "' FROM ( ");
-        sb.append(ebsQuery);
-        sb.append(") b");
-        String sqlQuery = sb.toString();
+        log.info("EBS Query after binding values: " + ebsQuery);
+
+        // Construct the parameterized query
+        String sqlQuery = "INSERT INTO " + srcStagingTable +
+                " SELECT ?, NULL, NULL, ROWNUM, b.*, ROWNUM, ? FROM (" + ebsQuery + ") b";
+
         log.info("SQL Query to insert data into EBS source staging table: " + sqlQuery);
+
         int count = 0;
         try {
-            // create Prepared Statement
+            // Create Prepared Statement
             stmnt = conn.prepareStatement(sqlQuery);
+            stmnt.setLong(1, srcTemplateId);
+            stmnt.setString(2, crLoadDataFromEbsReqPo.getBatchName());
+
             count = stmnt.executeUpdate();
         } catch (SQLException e) {
-            log.error("Rolling back ebs data inserts due to SQL exception: " + e.getMessage());
+            log.error("Rolling back EBS data inserts due to SQL exception: " + e.getMessage(), e);
             throw e;
         } finally {
-            if (stmnt != null)
-                stmnt.close();
+            if (stmnt != null) {
+                try {
+                    stmnt.close();
+                } catch (SQLException ex) {
+                    log.error("Error closing statement: " + ex.getMessage(), ex);
+                }
+            }
         }
+
         watch.stop();
         log.info("EBS source data insertion using DBLink completed in " + watch.getTotalTimeSeconds() + " seconds");
         return count;
