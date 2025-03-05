@@ -270,138 +270,138 @@ public class CrEbsConnectionServiceImpl {
         return ebsCon;
     }
 
-    //    public BasicResponsePo loadSrcMetaDataFromEbs(CrLoadMetaDataFromEbsReqPo crLoadMetaDataFromEbsReqPo,
-//                                                  HttpServletRequest request) throws ValidationException, Exception {
-//        log.info("======loadSrcMetaDataFromEbs======");
-//        log.info("DBLink Enabled: " + dbLinkEnabled);
-//        Connection con = null;
-//        Connection ebsCon = null;
-//        PreparedStatement stmnt = null;
-//        ResultSet rs = null;
-//        ResultSetMetaData rsmd = null;
-//        BasicResponsePo responsePo = new BasicResponsePo();
-//        String ebsQuery = "";
-//        try {
-//            Long objectId = crLoadMetaDataFromEbsReqPo.getObjectId();
-//            String metaDataTableName = crLoadMetaDataFromEbsReqPo.getMetaDataTableName();
-//            Long metaDataTableId = crSourceTableRepo.getTableId(metaDataTableName);
-//            CrEbsConnectionDetails ebsDtlsWithConnectnName = crEbsConnectionDetailsRepository
-//                    .findByConnectionName(crLoadMetaDataFromEbsReqPo.getConnectionName());
-//            if (ebsDtlsWithConnectnName == null) {
-//                throw new ValidationException("EBS connection doesn't exist");
-//            }
-//            if (metaDataTableId != null)
-//                throw new ValidationException("MetaDataTableName already exists");
-//            // Retrieve Ebs View query
-//            if (dbLinkEnabled) {
-//                ebsQuery = replaceEbsQueryWithDbLink(crLoadMetaDataFromEbsReqPo.getObjectId(), crLoadMetaDataFromEbsReqPo.getConnectionName(), ebsDtlsWithConnectnName.getConnectionType());
-//            } else {
-//                ebsQuery = getEbsQueryWithoutDbLink(crLoadMetaDataFromEbsReqPo.getObjectId(), ebsDtlsWithConnectnName.getConnectionType());
-//            }
-//
-//            log.info("EBS Query: " + ebsQuery);
-//
-//            // create database connection
-//            log.info("TENANT-->" + request.getHeader("X-TENANT-ID"));
-//            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(request.getHeader("X-TENANT-ID"));
-//
-//            String ebcConnectionName = crLoadMetaDataFromEbsReqPo.getConnectionName();
-//            ebsCon = getEbsConnection(ebcConnectionName, ebsDtlsWithConnectnName);
-//
-//            //If DBLink is enabled then get metadata using DBLink else use EBS jdbc connection
-//            if (dbLinkEnabled) {
-//                stmnt = con.prepareStatement(ebsQuery);
-//                rs = stmnt.executeQuery();
-//                rsmd = rs.getMetaData();
-//            } else {
-//                stmnt = ebsCon.prepareStatement(ebsQuery);
-//                rs = stmnt.executeQuery();
-//                rsmd = rs.getMetaData();
-//            }
-//
-//            // insert metadata of table into CR_SOURCE_TABLES
-//            metaDataTableName = insertTableMetaData(objectId, con, metaDataTableName);
-//            metaDataTableId = crSourceTableRepo.getTableId(metaDataTableName);
-//            log.info("metaDataTableId-->" + metaDataTableId);
-//
-//            // To insert MetaData columns into cr_source_columns
-//            insertColumnMetaData(rsmd, metaDataTableId, con);
-//            responsePo.setMessage("Loaded metadata successfully through EBS");
-//            responsePo.setPayload(metaDataTableId);
-//        } finally {
-//            if (rs != null)
-//                rs.close();
-//            if (stmnt != null)
-//                stmnt.close();
-//            if (con != null)
-//                con.close();
-//            if (ebsCon != null)
-//                ebsCon.close();
-//        }
-//        return responsePo;
-//    }
-    public BasicResponsePo loadSrcMetaDataFromEbs(CrLoadMetaDataFromEbsReqPo crLoadMetaDataFromEbsReqPo,
-                                                  HttpServletRequest request) throws ValidationException {
+        public BasicResponsePo loadSrcMetaDataFromEbs(CrLoadMetaDataFromEbsReqPo crLoadMetaDataFromEbsReqPo,
+                                                  HttpServletRequest request) throws ValidationException, Exception {
         log.info("======loadSrcMetaDataFromEbs======");
         log.info("DBLink Enabled: " + dbLinkEnabled);
-
+        Connection con = null;
+        Connection ebsCon = null;
+        PreparedStatement stmnt = null;
+        ResultSet rs = null;
+        ResultSetMetaData rsmd = null;
         BasicResponsePo responsePo = new BasicResponsePo();
         String ebsQuery = "";
-
-        // Validate Input Parameters
-        validateLoadMetaDataRequest(crLoadMetaDataFromEbsReqPo);
-
-        try (Connection con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(request.getHeader("X-TENANT-ID"));
-             Connection ebsCon = dbLinkEnabled ? null : getEbsConnection(crLoadMetaDataFromEbsReqPo.getConnectionName(),
-                     crEbsConnectionDetailsRepository.findByConnectionName(crLoadMetaDataFromEbsReqPo.getConnectionName()));
-             PreparedStatement stmnt = dbLinkEnabled ? con.prepareStatement(ebsQuery) : ebsCon.prepareStatement(ebsQuery);
-             ResultSet rs = stmnt.executeQuery()) {
-
+        try {
             Long objectId = crLoadMetaDataFromEbsReqPo.getObjectId();
-            String metaDataTableName = sanitizeTableName(crLoadMetaDataFromEbsReqPo.getMetaDataTableName());
+            String metaDataTableName = crLoadMetaDataFromEbsReqPo.getMetaDataTableName();
             Long metaDataTableId = crSourceTableRepo.getTableId(metaDataTableName);
-
-            if (metaDataTableId != null) {
+            CrEbsConnectionDetails ebsDtlsWithConnectnName = crEbsConnectionDetailsRepository
+                    .findByConnectionName(crLoadMetaDataFromEbsReqPo.getConnectionName());
+            if (ebsDtlsWithConnectnName == null) {
+                throw new ValidationException("EBS connection doesn't exist");
+            }
+            if (metaDataTableId != null)
                 throw new ValidationException("MetaDataTableName already exists");
+            // Retrieve Ebs View query
+            if (dbLinkEnabled) {
+                ebsQuery = replaceEbsQueryWithDbLink(crLoadMetaDataFromEbsReqPo.getObjectId(), crLoadMetaDataFromEbsReqPo.getConnectionName(), ebsDtlsWithConnectnName.getConnectionType());
+            } else {
+                ebsQuery = getEbsQueryWithoutDbLink(crLoadMetaDataFromEbsReqPo.getObjectId(), ebsDtlsWithConnectnName.getConnectionType());
             }
 
-            // Retrieve and Validate EBS Query
-            ebsQuery = dbLinkEnabled
-                    ? replaceEbsQueryWithDbLink(objectId, crLoadMetaDataFromEbsReqPo.getConnectionName(),
-                    crEbsConnectionDetailsRepository.findByConnectionName(crLoadMetaDataFromEbsReqPo.getConnectionName()).getConnectionType())
-                    : getEbsQueryWithoutDbLink(objectId, crEbsConnectionDetailsRepository.findByConnectionName(crLoadMetaDataFromEbsReqPo.getConnectionName()).getConnectionType());
+            log.info("EBS Query: " + ebsQuery);
 
-            if (Validations.isNullOrEmpty(ebsQuery)) {
-                throw new ValidationException("EBS SQL extraction query is not present");
+            // create database connection
+            log.info("TENANT-->" + request.getHeader("X-TENANT-ID"));
+            con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(request.getHeader("X-TENANT-ID"));
+
+            String ebcConnectionName = crLoadMetaDataFromEbsReqPo.getConnectionName();
+            ebsCon = getEbsConnection(ebcConnectionName, ebsDtlsWithConnectnName);
+
+            //If DBLink is enabled then get metadata using DBLink else use EBS jdbc connection
+            if (dbLinkEnabled) {
+                stmnt = con.prepareStatement(ebsQuery);
+                rs = stmnt.executeQuery();
+                rsmd = rs.getMetaData();
+            } else {
+                stmnt = ebsCon.prepareStatement(ebsQuery);
+                rs = stmnt.executeQuery();
+                rsmd = rs.getMetaData();
             }
 
-            log.info("EBS Query Retrieved Successfully");
-
-            // Process ResultSet Metadata
-            ResultSetMetaData rsmd = rs.getMetaData();
-
-            // Insert Metadata into CR_SOURCE_TABLES
+            // insert metadata of table into CR_SOURCE_TABLES
             metaDataTableName = insertTableMetaData(objectId, con, metaDataTableName);
             metaDataTableId = crSourceTableRepo.getTableId(metaDataTableName);
+            log.info("metaDataTableId-->" + metaDataTableId);
 
-            log.info("metaDataTableId --> " + metaDataTableId);
-
-            // Insert Column Metadata
+            // To insert MetaData columns into cr_source_columns
             insertColumnMetaData(rsmd, metaDataTableId, con);
-
             responsePo.setMessage("Loaded metadata successfully through EBS");
             responsePo.setPayload(metaDataTableId);
-
-        } catch (SQLException e) {
-            log.error("Database error while loading metadata", e);
-            throw new RuntimeException("Error loading metadata from EBS", e);
-        } catch (Exception e) {
-            log.error("Unexpected error while loading metadata", e);
-            throw new RuntimeException("Unexpected error", e);
+        } finally {
+            if (rs != null)
+                rs.close();
+            if (stmnt != null)
+                stmnt.close();
+            if (con != null)
+                con.close();
+            if (ebsCon != null)
+                ebsCon.close();
         }
-
         return responsePo;
     }
+//    public BasicResponsePo loadSrcMetaDataFromEbs(CrLoadMetaDataFromEbsReqPo crLoadMetaDataFromEbsReqPo,
+//                                                  HttpServletRequest request) throws ValidationException {
+//        log.info("======loadSrcMetaDataFromEbs======");
+//        log.info("DBLink Enabled: " + dbLinkEnabled);
+//
+//        BasicResponsePo responsePo = new BasicResponsePo();
+//        String ebsQuery = "";
+//
+//        // Validate Input Parameters
+//        validateLoadMetaDataRequest(crLoadMetaDataFromEbsReqPo);
+//
+//        try (Connection con = dynamicDataSourceBasedMultiTenantConnectionProvider.getConnection(request.getHeader("X-TENANT-ID"));
+//             Connection ebsCon = dbLinkEnabled ? null : getEbsConnection(crLoadMetaDataFromEbsReqPo.getConnectionName(),
+//                     crEbsConnectionDetailsRepository.findByConnectionName(crLoadMetaDataFromEbsReqPo.getConnectionName()));
+//             PreparedStatement stmnt = dbLinkEnabled ? con.prepareStatement(ebsQuery) : ebsCon.prepareStatement(ebsQuery);
+//             ResultSet rs = stmnt.executeQuery()) {
+//
+//            Long objectId = crLoadMetaDataFromEbsReqPo.getObjectId();
+//            String metaDataTableName = sanitizeTableName(crLoadMetaDataFromEbsReqPo.getMetaDataTableName());
+//            Long metaDataTableId = crSourceTableRepo.getTableId(metaDataTableName);
+//
+//            if (metaDataTableId != null) {
+//                throw new ValidationException("MetaDataTableName already exists");
+//            }
+//
+//            // Retrieve and Validate EBS Query
+//            ebsQuery = dbLinkEnabled
+//                    ? replaceEbsQueryWithDbLink(objectId, crLoadMetaDataFromEbsReqPo.getConnectionName(),
+//                    crEbsConnectionDetailsRepository.findByConnectionName(crLoadMetaDataFromEbsReqPo.getConnectionName()).getConnectionType())
+//                    : getEbsQueryWithoutDbLink(objectId, crEbsConnectionDetailsRepository.findByConnectionName(crLoadMetaDataFromEbsReqPo.getConnectionName()).getConnectionType());
+//
+//            if (Validations.isNullOrEmpty(ebsQuery)) {
+//                throw new ValidationException("EBS SQL extraction query is not present");
+//            }
+//
+//            log.info("EBS Query Retrieved Successfully");
+//
+//            // Process ResultSet Metadata
+//            ResultSetMetaData rsmd = rs.getMetaData();
+//
+//            // Insert Metadata into CR_SOURCE_TABLES
+//            metaDataTableName = insertTableMetaData(objectId, con, metaDataTableName);
+//            metaDataTableId = crSourceTableRepo.getTableId(metaDataTableName);
+//
+//            log.info("metaDataTableId --> " + metaDataTableId);
+//
+//            // Insert Column Metadata
+//            insertColumnMetaData(rsmd, metaDataTableId, con);
+//
+//            responsePo.setMessage("Loaded metadata successfully through EBS");
+//            responsePo.setPayload(metaDataTableId);
+//
+//        } catch (SQLException e) {
+//            log.error("Database error while loading metadata", e);
+//            throw new RuntimeException("Error loading metadata from EBS", e);
+//        } catch (Exception e) {
+//            log.error("Unexpected error while loading metadata", e);
+//            throw new RuntimeException("Unexpected error", e);
+//        }
+//
+//        return responsePo;
+//    }
 
 
     private String insertTableMetaData(Long objectId, Connection con, String metaDataTableName) throws Exception {
