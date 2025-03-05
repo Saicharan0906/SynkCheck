@@ -11,6 +11,9 @@ import com.rite.products.convertrite.respository.CrFBDIViewRepo;
 import com.rite.products.convertrite.respository.CrFbdiColsRepo;
 import com.rite.products.convertrite.respository.CrFbdiHdrsRepo;
 import com.rite.products.convertrite.utils.ControlFileParser;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.util.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -158,6 +161,44 @@ public class CrFbdiServiceImpl implements CrFbdiService {
 //        return target;
 //    }
 
+//    private Path downloadFbdiTemplateFromServer(String fileName, String version, HttpServletResponse resp)
+//            throws Exception {
+//        log.info("Start of downloadFbdiTemplateFromServer Method ###");
+//
+//        // Validate input parameters
+//        if (!isValidInput(fileName) || !isValidInput(version)) {
+//            throw new IllegalArgumentException("Invalid fileName or version input");
+//        }
+//
+//        String url = ctlUrlFirstPart + version + ctlUrlSecondPart + fileName;
+//        String sanitizedUrl = URLEncoder.encode(url, StandardCharsets.UTF_8);
+//        resp.setHeader("API", sanitizedUrl);
+//
+//        // Create a secure temporary directory
+//        Path target = Files.createTempDirectory("fbdi_templates");
+//        log.info("Target Directory: " + target);
+//
+//        // Ensure filename does not allow path traversal
+//        Path safePath = target.resolve(fileName).normalize();
+//        if (!safePath.startsWith(target)) {
+//            throw new SecurityException("Invalid file path detected");
+//        }
+//        File file = safePath.toFile();
+//
+//        // Download file safely
+//        try (InputStream in = new URL(url).openStream();
+//             OutputStream outputStream = new FileOutputStream(file)) {
+//            IOUtils.copy(in, outputStream);
+//        } catch (IOException e) {
+//            throw new Exception("File download failed: " + e.getMessage(), e);
+//        }
+//        return target;
+//    }
+//
+//    private boolean isValidInput(String input) {
+//        return input != null && input.matches("^[a-zA-Z0-9_.-]+$") && !input.contains("..");
+//    }
+
     private Path downloadFbdiTemplateFromServer(String fileName, String version, HttpServletResponse resp)
             throws Exception {
         log.info("Start of downloadFbdiTemplateFromServer Method ###");
@@ -167,7 +208,13 @@ public class CrFbdiServiceImpl implements CrFbdiService {
             throw new IllegalArgumentException("Invalid fileName or version input");
         }
 
+        // Construct and validate the URL
         String url = ctlUrlFirstPart + version + ctlUrlSecondPart + fileName;
+        if (!isValidUrl(url)) {
+            throw new SecurityException("Untrusted URL: " + url);
+        }
+
+        // Encode URL properly
         String sanitizedUrl = URLEncoder.encode(url, StandardCharsets.UTF_8);
         resp.setHeader("API", sanitizedUrl);
 
@@ -182,8 +229,8 @@ public class CrFbdiServiceImpl implements CrFbdiService {
         }
         File file = safePath.toFile();
 
-        // Download file safely
-        try (InputStream in = new URL(url).openStream();
+        // Download file securely
+        try (InputStream in = getSafeInputStream(url);
              OutputStream outputStream = new FileOutputStream(file)) {
             IOUtils.copy(in, outputStream);
         } catch (IOException e) {
@@ -192,8 +239,37 @@ public class CrFbdiServiceImpl implements CrFbdiService {
         return target;
     }
 
+    // Validate input to prevent path traversal
     private boolean isValidInput(String input) {
         return input != null && input.matches("^[a-zA-Z0-9_.-]+$") && !input.contains("..");
+    }
+
+    // Validate URL to prevent SSRF
+    private boolean isValidUrl(String url) {
+        try {
+            URI uri = new URI(url);
+            String host = uri.getHost();
+            return host != null && (host.startsWith("https://www.oracle.com/webfolder/technetwork/docs/fbdi-") );
+        } catch (URISyntaxException e) {
+            return false;
+        }
+    }
+
+    // Secure method to open URL stream
+    private InputStream getSafeInputStream(String url) throws IOException {
+        URL website = new URL(url);
+        HttpURLConnection connection = (HttpURLConnection) website.openConnection();
+        connection.setRequestMethod("GET");
+        connection.setConnectTimeout(5000); // 5 seconds timeout
+        connection.setReadTimeout(5000);
+        connection.setInstanceFollowRedirects(false); // Prevent redirects
+
+        int responseCode = connection.getResponseCode();
+        if (responseCode != HttpURLConnection.HTTP_OK) {
+            throw new IOException("Failed to download file, HTTP response: " + responseCode);
+        }
+
+        return connection.getInputStream();
     }
 
 
