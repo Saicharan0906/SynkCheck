@@ -529,8 +529,8 @@ public class CrEbsConnectionServiceImpl {
 
             try (ResultSet rs = stmnt.executeQuery()) {
                 if (rs.next()) {
-                    ebsQuery = rs.getString("info_value");
-                    ebsQuery = sanitizeQuery(ebsQuery); // Secure query validation
+                    String rawQuery = rs.getString("info_value");
+                    ebsQuery = sanitizeQuery(rawQuery);
                 }
             }
         } catch (SQLException e) {
