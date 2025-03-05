@@ -270,7 +270,7 @@ public class CrEbsConnectionServiceImpl {
         return ebsCon;
     }
 
-        public BasicResponsePo loadSrcMetaDataFromEbs(CrLoadMetaDataFromEbsReqPo crLoadMetaDataFromEbsReqPo,
+    public BasicResponsePo loadSrcMetaDataFromEbs(CrLoadMetaDataFromEbsReqPo crLoadMetaDataFromEbsReqPo,
                                                   HttpServletRequest request) throws ValidationException, Exception {
         log.info("======loadSrcMetaDataFromEbs======");
         log.info("DBLink Enabled: " + dbLinkEnabled);
@@ -307,7 +307,10 @@ public class CrEbsConnectionServiceImpl {
 
             String ebcConnectionName = crLoadMetaDataFromEbsReqPo.getConnectionName();
             ebsCon = getEbsConnection(ebcConnectionName, ebsDtlsWithConnectnName);
-
+            // Example: Check if the query contains only allowed characters
+            if (!ebsQuery.matches("[a-zA-Z0-9_\\s=?,.*]+")) {
+                throw new ValidationException("Unsafe query detected");
+            }
             //If DBLink is enabled then get metadata using DBLink else use EBS jdbc connection
             if (dbLinkEnabled) {
                 stmnt = con.prepareStatement(ebsQuery);
@@ -340,6 +343,8 @@ public class CrEbsConnectionServiceImpl {
         }
         return responsePo;
     }
+
+
 //    public BasicResponsePo loadSrcMetaDataFromEbs(CrLoadMetaDataFromEbsReqPo crLoadMetaDataFromEbsReqPo,
 //                                                  HttpServletRequest request) throws ValidationException {
 //        log.info("======loadSrcMetaDataFromEbs======");
