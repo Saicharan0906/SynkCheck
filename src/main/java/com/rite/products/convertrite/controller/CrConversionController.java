@@ -120,9 +120,8 @@ public class CrConversionController {
 			@RequestParam("pBatchName") String pBatchName,
 			HttpServletRequest request) throws Exception {
 
-		// Validate input parameters
-		if (Validations.isNullOrEmptyorWhiteSpace(cloudTemplateName)) {
-			throw new ValidationException("Cloud Template Name cannot be empty.");
+		if (Validations.isNullOrEmptyorWhiteSpace(cloudTemplateName) || !cloudTemplateName.matches("^[a-zA-Z]+$") ) {
+			throw new ValidationException("Cloud Template Name must contain only alphabetic characters and cannot be empty.");
 		}
 		if (Validations.isNullOrEmptyorWhiteSpace(pReprocessFlag)) {
 			throw new ValidationException("Reprocess Flag cannot be empty.");
