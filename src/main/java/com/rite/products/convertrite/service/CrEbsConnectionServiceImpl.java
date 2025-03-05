@@ -321,8 +321,11 @@ public class CrEbsConnectionServiceImpl {
                 }
             } else {
                 stmnt = ebsCon.prepareStatement(ebsQuery);
-                rs = stmnt.executeQuery();
-                rsmd = rs.getMetaData();
+                boolean isResultSet = stmnt.execute();
+                if (isResultSet) {
+                    rs = stmnt.getResultSet();
+                    rsmd = rs.getMetaData();
+                }
             }
 
             // insert metadata of table into CR_SOURCE_TABLES
