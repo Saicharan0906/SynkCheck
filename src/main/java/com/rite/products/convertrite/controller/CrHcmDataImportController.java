@@ -15,6 +15,7 @@ import com.rite.products.convertrite.service.HcmDataImportService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -42,7 +43,7 @@ public class CrHcmDataImportController {
             @ApiResponse(code = 400, message = "Bad Request") })
     @PostMapping("/hcmloadandimportdata")
     public ResponseEntity<HcmLoadAndImportDataRes> hcmLoadAndImportData(
-            @RequestBody HcmLoadandImportDataReqPo hcmLoadandImportDataReqPo,
+            @RequestBody @Valid HcmLoadandImportDataReqPo hcmLoadandImportDataReqPo,
             @RequestHeader("Authorization") String bearerToken, HttpServletResponse response) {
           HcmLoadAndImportDataRes loadandImportDataResPo = new HcmLoadAndImportDataRes();
         try {
