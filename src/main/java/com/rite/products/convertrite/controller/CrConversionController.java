@@ -141,12 +141,23 @@ public class CrConversionController {
 
 		return crConversionService.transformDataToCloud(cloudTemplateName, pReprocessFlag, pBatchFlag, pBatchName, request);
 	}
-	@ApiOperation(value = "This Api is for downloading fbdi from ftp")
+	@ApiOperation(value = "This API is for downloading fbdi from ftp")
 	@GetMapping("/downloadfbdi")
-	public void downloadFbdi(@RequestParam("cloudTemplateId") Long cloudTemplateId, @RequestParam("batchName") String batchName, HttpServletResponse response)
-			throws Exception {
+	public void downloadFbdi(
+			@RequestParam("cloudTemplateId") Long cloudTemplateId,
+			@RequestParam("batchName") String batchName,
+			HttpServletResponse response) throws Exception {
+
+		// Validate input parameters
+		if (cloudTemplateId == null || cloudTemplateId <= 0) {
+			throw new ValidationException("Cloud Template ID must be a positive number.");
+		}
+		if (Validations.isNullOrEmptyorWhiteSpace(batchName) || !batchName.matches("^[a-zA-Z]+$")) {
+			throw new ValidationException("Batch Name must contain only alphabetic characters and cannot be empty.");
+		}
+
 		try {
-			crConversionService.downloadFbdi(cloudTemplateId,batchName, response);
+			crConversionService.downloadFbdi(cloudTemplateId, batchName, response);
 		} catch (Exception e) {
 			log.error(e.getMessage());
 			throw new Exception(e.getMessage());
